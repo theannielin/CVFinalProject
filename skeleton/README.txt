@@ -1,0 +1,150 @@
+This directory contains skeleton code as a starting point for the Computer Vision HW. 
+
+
+FILE STRUCTURE
+==============
+
+There are several files, but you should mainly change src/R2Image.cpp.
+
+  src/ - Directory with source code
+    Makefile - Unix/Mac makefile for building the project with "make". 
+    imagepro.[vcproj/sln/suo] - Project file for Visual Studio 2005 on Windows
+    imgpro.cpp - Main program, parses the command line arguments, and calls the appropriate image functions
+    R2Image.[cpp/h] - Image class with processing functions (this is the only file that you need to edit)
+    R2Pixel.[cpp/h] - Pixel class 
+    R2/ - A library of useful 2D geometric primitives
+    jpeg/ - A library for reading/writing JPEG files
+  input/ - Contains example input images. 
+  output/ - Es empty to start -- it will contain the images produced by your program (see below)
+  runme.bat - a script (for Windows) that you will fill in to demonstrate execution of your program
+  runme.sh - same as <code>runme.bat, but for Mac OS X
+
+COMPILATION
+===========
+
+If you are developing on a Windows machine and have Visual Studio
+installed, use the provided project solution file (assn1.sln) in the
+src/ directory to build the program. If you are developing on a Mac or
+Linux machine, cd into the src/ directory and type "make". In either
+case, an executable called imgpro (or imgpro.exe) will be created in
+the src/ directory.
+
+HOMEWORK 1A
+===========
+
+"imgpro.exe input.jpg output.jpg -brightness 2"
+Implement the Sobel operator with a 3x3 kernel.
+Implement Sharpen() with some kernel of your choice that makes the image look "sharper" (but without quality degradation).
+
+HOMEWORK 1B
+===========
+
+Implement the Gaussian Blur filter.
+You will need to compute the kernel based on the sigma parameter, find formula online.
+Use kernel size of sigma x 3 in both direction (so complete kernel width would be 6 x sigma + 1)
+
+CHALLENGE 1
+===========
+
+Implement the Bilateral filter.
+For this, I will provide a film scan image with some grain.
+The goal is to remove grain and protecting all the sharp edges.
+(1 - dist) * A - B
+is the formula you should use for the color distance for bilateral
+he recommends:
+float A = 1.2;
+float B = 0.2;
+
+HOMEWORK 3
+==========
+
+Create a new sharpening filter using the blur method.
+Create a high pass filter to get the "detail layer."
+Recombine the original and the enhanced detail.
+Redo the images (sharpening).
+
+CHALLENGE 2
+===========
+
+Implement a filter that applies lens distortion.
+
+HOMEWORK 4
+==========
+
+Implement the Harris corner detector.
+- Compute (I_x)^2, (I_y)^2, and I_x*I_y
+- Apply a Gaussian Blur of small kernel size to all three
+- Compute the Harris value for each pixel from these
+- Submit the result of the processed test pattern
+Feature Deetection
+- Find 150 features with very high corner score
+- Make sure there is at least 10 pixel distance between them
+- Mark these points on the output image
+Tips
+- Make sure the Sobel operator is not offset/normalized
+- Make sure there is no clamping of the gradient values
+
+CHALLENGE 3
+===========
+
+Implement the scale-invariant Harris corner detector
+- Compute the Harris at different scales (10, 20? experiment)
+- Display the strongest features at their scale using scaled circles/rects
+
+HOMEWORK 5
+==========
+Tracking
+– Working on a pair of images (take your own, too)
+– Detect 150 features on image A (done)
+– Find all 150 features on image B
+    - For each point run a local search
+    - Search area is centered at original location
+    - Search area size should be reasonable (20% image size)
+    - Search loop should check SSD at each location within the region
+    - Choose best location
+- Find the translation from one image to another using RANSAC
+    - Track 150 points from image A to image B
+    - Using RANSAC compute robustly the translation
+    - Reject the vectors that seem to be outliers (color red)
+
+HOMEWORK 6
+==========
+Homography estimation phase 1
+- Implement a function that computes the H Homography matrix from these point correspondences:
+A:
+    (0,0)->(1,0)
+    (1,0)->(2,0)
+    (1,1)->(2,1)
+    (0,1)->(1,1)
+B:
+    (0,0)->(1,2)
+    (1,0)->(1,1)
+    (1,1)->(3,1)
+    (0,1)->(3,2)
+- Check the result on paper
+
+HOMEWORK 7
+==========
+- RANSAC (homogr.)
+    - Randomly select a small subset of points (at least 4)
+    - Compute parameters using norm. DLT
+    - Project points x to x' to find matches
+        - Count points within a distance threshold (inliers)
+    - If the number of inliers is less than a threshold, repeat the above
+    - After N trials, choose the largest inlier set and re-estimate the model
+- Normalized DLT Algorithm
+    - Compute the centroid of all points on A
+    - Compute the average distance (d) of points from this centroid
+    - Offset all points of A so the centroid becomes (0,0) and then scale all points by 1.4142/d
+    - Do the first 3 steps for points on B
+    - Loop over all point pairs and add two rows of the matrix A:
+        - [0 0 0 -w_b*x_a -w_b*y_a -w_b*w_a y_b*x_a y_b*y_a y_b*w_a]
+        - [w_b*x_a w_b*y_a w_b*w_a 0 0 0 -x_b*x_a -x_b*y_a -x_b*w_a]
+            - where the matching points are (x_a, y_a, w_a) and (x_b, y_b, w_b)
+            - You could set both w values to 1...
+    - Find the nullspace of the matrix A (see the SVD example in the code)
+    - Build the matrix H_norm from the resulting 9 numbers
+    - Compensate the normalization by computing h = T^(*-1) * H_norm * T
+        - Here T and T* are the product of the offset and scale matrices corresponding to the normalization in the first steps
+
+
