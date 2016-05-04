@@ -262,7 +262,7 @@ main(int argc, char **argv)
         outname.append(std::to_string(i)).append(".jpg");
         R2Image *next_image = new R2Image(filename.c_str());
         image->magicReplaceFrameContent(next_image);
-        image->Write(outname.c_str());
+        next_image->Write(outname.c_str());
         delete next_image;
       }
     }

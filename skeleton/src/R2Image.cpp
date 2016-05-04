@@ -977,10 +977,10 @@ magicReplaceFrameContent(R2Image * nextImage)
   int centerX = width/2;
   int centerY = height/2;
   for (int i = 0; i < 5; i++) {
-    Pixel(centerX - i, centerY) = red;
-    Pixel(centerX, centerY  - i) = red;
-    Pixel(centerX + i, centerY) = red;
-    Pixel(centerX, centerY + i) = red;
+    nextImage->Pixel(centerX - i, centerY) = red;
+    nextImage->Pixel(centerX, centerY  - i) = red;
+    nextImage->Pixel(centerX + i, centerY) = red;
+    nextImage->Pixel(centerX, centerY + i) = red;
   }
 }
 
