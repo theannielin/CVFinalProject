@@ -954,9 +954,9 @@ void R2Image::
 magicExtractFrozen(void)
 {
   // TODO add a red cross in middle of image for now
-  // Extract the frozen image from the first frame and store it somehow
+  // Extract the frozen image from the first frame and store it somehow --> can we just make this a member var?
   printf("GOT TO EXTRACT FROZEN FUNCTION\n");
-  R2Pixel red = R2Pixel(1.0, 0.0, 0.0, 0.0);
+  R2Pixel red = R2red_pixel;
   int centerX = width/2;
   int centerY = height/2;
   for (int i = 0; i < 5; i++) {
