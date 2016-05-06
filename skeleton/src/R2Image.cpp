@@ -9,6 +9,7 @@
 #include "R2Image.h"
 #include "svd.h"
 #include <iostream>
+#include <time.h>
 
 
 
@@ -424,6 +425,11 @@ Harris(double sigma)
   // Output should be 50% grey at flat regions, white at corners and black/dark near edges
 
   // Compute (I_x)^2, (I_y)^2, and I_x*I_y
+
+  // timer goes here
+  clock_t start, end;
+  start = clock();
+
   R2Image Ix = R2Image(*this);
   Ix.SobelX();
   R2Image Iy = R2Image(*this);
@@ -488,6 +494,10 @@ Harris(double sigma)
     }
     topValues[featureCount++] = curPoint;
   }
+
+  end = clock();
+  float diff = (end - start) / CLOCKS_PER_SEC;
+  std::cout << "Run time for Annie's is " << diff << std::endl;
 
   // Mark these points on the output image (red cross)
   R2Pixel red = R2Pixel(1.0, 0.0, 0.0, 0.0);
