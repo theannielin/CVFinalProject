@@ -967,15 +967,126 @@ blendOtherImageHomography(R2Image * otherImage)
   }
 }
 
-void magicExtractFrozen(void) {
-  // TODO Detect and store the "frame" information
+// MAGIC FRAME FINAL PROJECT 
+
+R2Image freezeFrame; 
+double sigma = 3.0;
+double alpha = 0.04;
+
+void R2Image::magicFeature(void) {
+
+  /* HARRIS FEATURE DETECTOR */ 
+
+  // Compute (I_x)^2, (I_y)^2, and I_x*I_y
+  R2Image Ix = R2Image(*this);
+  Ix.SobelX();
+  R2Image Iy = R2Image(*this);
+  Iy.SobelY();
+
+  R2Image Ix_Iy = R2Image(width, height);
+
+  for (int i = 0; i < width; i++) {
+    for (int j = 0;  j < height; j++) {
+      Ix_Iy.Pixel(i,j) = Ix.Pixel(i,j) * Iy.Pixel(i,j);
+      Ix.Pixel(i,j) = Ix.Pixel(i,j) * Ix.Pixel(i,j);
+      Iy.Pixel(i,j) = Iy.Pixel(i,j) * Iy.Pixel(i,j);
+    }
+  }
+
+  // Apply a Gaussian Blur of small kernel size to all three
+  Ix.Blur(sigma);
+  Iy.Blur(sigma);
+  Ix_Iy.Blur(sigma);
+
+  // Compute the Harris value for each pixel from these
+  R2Image Harris = R2Image(width,height);
+  
+  // Store values in an array
+  point *values = new point[width * height];
+  
+  // For normalization such that 0 becomes grey
+  R2Pixel grey = R2Pixel(0.5, 0.5, 0.5, 0.0);
+
+  for (int i = 0; i < width; i++) {
+
+    for (int j = 0;  j < height; j++) {
+    
+      R2Pixel det = Ix.Pixel(i,j) * Iy.Pixel(i,j) - Ix_Iy.Pixel(i,j) * Ix_Iy.Pixel(i,j);
+      R2Pixel trace = Ix.Pixel(i,j) + Iy.Pixel(i,j);
+      Harris.Pixel(i,j) = det - alpha * (trace * trace);
+      Harris.Pixel(i,j) += grey;
+      Harris.Pixel(i,j);
+      point curPoint;
+      curPoint.val = Harris.Pixel(i,j).Red() + Harris.Pixel(i,j).Green() + Harris.Pixel(i,j).Blue();
+      curPoint.x = i;
+      curPoint.y = j;
+      values[i * height + j] = curPoint;
+    
+    }
+  }
+
+  // Sort the array according to values
+  qsort(values, width * height, sizeof(point), compare);
+  
+  // Find 150 features with very high corner score
+  printf("FINDING FEATURES\n");
+  point *topValues = new point[150];
+  
+  int featureCount = 0;
+  
+  for (int idx = 0; featureCount < 150 && idx < width*height; idx++) {
+    point curPoint = values[idx];
+    bool close = false;
+    // Make sure there is at least 10 pixel distance between them
+    for (int feat = 0; feat < featureCount; feat++) {
+  
+      int x = topValues[feat].x - curPoint.x;
+      int y = topValues[feat].y - curPoint.y;
+  
+      if (sqrt(x*x + y*y) < 10) {
+        close = true;
+      }
+  
+    }
+  
+    if(close) {
+      continue;
+  
+    }
+  
+    topValues[featureCount++] = curPoint;
+  }
+
+  // output for now: blue square over each feature point
+  // TODO look for features of trackers and mark these with larger squares
+  // TODO save detected four corners in this->frame_corners array
+  R2Pixel BLUE = R2Pixel(0,0,1,1);
+  for (int i = 139; i < 150; i++) {
+    point cur = topValues[i];
+    for (int j = -5; j < 6; j++) {
+      for(int z = -5; z < 6; z++){
+        Pixel(cur.x + j, cur.y + z) = BLUE;
+      }
+    }
+    
+  }
 }
+
+bool R2Image::clusters(int x, int y) {
+  // Tracker identification
+  // TODO check if feature point is surrounded by clusters of R/G/B/Bl, and clusters of white
+  // Returns true for now
+  return true;
+}
+
 
 void R2Image::
 magicExtractFrozen(void)
 {
   // TODO add a red cross in middle of image for now
-  // Extract the frozen image from the first frame and store it somehow --> can we just make this a member var?
+  // TODO Detect and store the "frame" information
+  // TODO set freezeFrame to dimensions of the frame according to frame_corners
+  // TODO copy contents of frame into freezeFrame var, defined above
   printf("GOT TO EXTRACT FROZEN FUNCTION\n");
   R2Pixel red = R2red_pixel;
   int centerX = width/2;

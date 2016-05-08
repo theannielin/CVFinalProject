@@ -41,6 +41,7 @@ static char options[] =
 "  -sobelY\n"
 "  -log\n"
 "  -harris <real:sigma>\n"
+"  -feature\n"
 "  -saturation <real:factor>\n"
 "  -brightness <real:factor>\n"
 "  -blur <real:sigma>\n"
@@ -188,6 +189,11 @@ main(int argc, char **argv)
       argv++, argc--;
       image->LoG();
     }
+
+    else if (!strcmp(*argv, "-feature")) {
+      argv++, argc--;
+      image->magicFeature();
+  } 
     else if (!strcmp(*argv, "-saturation")) {
       CheckOption(*argv, argc, 2);
       double factor = atof(argv[1]);

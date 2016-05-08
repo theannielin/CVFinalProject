@@ -83,6 +83,10 @@ class R2Image {
   void line(int x0, int x1, int y0, int y1, float r, float g, float b);
   void blendOtherImageTranslated(R2Image * otherImage);
   void blendOtherImageHomography(R2Image * otherImage);
+
+  // magic frame -- final project operations
+  void magicFeature();
+  bool clusters(int x, int y);
   void magicReplaceFrameContent(R2Image * nextImage);
   void magicExtractFrozen(void);
 
@@ -96,6 +100,12 @@ class R2Image {
   int WritePPM(const char *filename, int ascii = 0) const;
   int WriteJPEG(const char *filename) const;
 
+  // magic frame - to contain pairs (x,y) - image coordinates
+  struct coordinates {
+    int x;
+    int y;
+  };
+
  private:
   // Utility functions
   void Resize(int width, int height);
@@ -106,6 +116,8 @@ class R2Image {
   int npixels;
   int width;
   int height;
+  coordinates frame_corners[4]; // magic frame - contains detected coordinates of frame corners
+  double hMatrix[3][3]; // magic frame - H matrix of 3x3 transformation between frames
 };
 
 
