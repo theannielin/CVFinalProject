@@ -20,6 +20,6 @@ popd
 # generate the result pictures
 
 src/imgpro input/0000000.jpg output/0000000.jpg \
-   -magic 22
+   -magic 80
 
 
