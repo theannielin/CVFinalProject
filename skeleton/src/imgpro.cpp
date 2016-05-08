@@ -29,6 +29,7 @@
 #include "R2Pixel.h"
 #include "R2Image.h"
 
+using namespace std;
 
 
 // Program arguments
@@ -274,10 +275,11 @@ main(int argc, char **argv)
   }
 
   // // Write output image COMMENTED OUT FOR FINAL PROJECT
-  // if (!image->Write(output_image_name)) {
-  //   fprintf(stderr, "Unable to read image from %s\n", output_image_name);
-  //   exit(-1);
-  // }
+  if (!image->Write(output_image_name)) {
+    fprintf(stdout, "Remove this when done!\n");
+    fprintf(stderr, "Unable to read image from %s\n", output_image_name);
+    exit(-1);
+  }
 
   // Delete image
   delete image;

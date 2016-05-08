@@ -720,125 +720,136 @@ blendOtherImageTranslated(R2Image * otherImage)
     topValues[featureCount++] = curPoint;
   }
 
-  // Search area size should be reasonable (20% image size)
-  printf("FINDING TRANSLATIONS\n");
-  translation *translations = new translation[150];
-  int searchWidth = width/5;
-  int searchHeight = height/5;
-  const int offset = 13;
-  // For each point run a local search
-  for (int i = 0; i < 150; i++) {
-    point curPoint = topValues[i];
-    // Search loop should check SSD at each location within the region
-    int minX = curPoint.x;
-    int minY = curPoint.y;
-    double minSum = 999999.0;
-    for (int x = curPoint.x - searchWidth; x < curPoint.x + searchWidth; x++) {
-      for (int y = curPoint.y - searchHeight; y < curPoint.y + searchHeight; y++) {
-        double sum = 0.0;
-        for (int i = -offset/2; i < offset/2; i++) {
-          for (int j = -offset/2; j < offset/2; j++) {
-            // check for bounds
-            int xpp = curPoint.x + i;
-            int ypp = curPoint.y + j;
-            if (xpp < 0 || xpp > width) {
-              xpp = curPoint.x;
-            }
-            if (ypp < 0 || ypp > height) {
-              ypp = curPoint.y;
-            }
-            int xp = x + i;
-            int yp = y + j;
-            if (xp < 0 || xp > width) {
-              xp = curPoint.x;
-            }
-            if (yp < 0 || yp > height) {
-              yp = curPoint.y;
-            }
-            R2Pixel diff = orig.Pixel(xpp, ypp) - otherImage->Pixel(xp, yp);
-            sum += diff.Red()*diff.Red() + diff.Green()*diff.Green() + diff.Blue()*diff.Blue();
-          }
-        }
-        if (sum < minSum) {
-          minX = x;
-          minY = y;
-          minSum = sum;
-        }
+   R2Pixel BLUE = R2Pixel(0,0,1,1);
+  for (int i = 139; i < 150; i++) {
+    point cur = topValues[i];
+    for (int j = -5; j < 6; j++) {
+      for(int z = -5; z < 6; z++){
+        Pixel(cur.x + j, cur.y + z) = BLUE;
       }
     }
-    // Store the translation vector
-    translation curTrans;
-    curTrans.xOriginal = curPoint.x;
-    curTrans.yOriginal = curPoint.y;
-    curTrans.xTranslated = minX;
-    curTrans.yTranslated = minY;
-    translations[i] = curTrans;
+    
   }
 
-  // RANSAC
-  printf("RANSAC\n");
-  const double threshold = 4;
-  int ransacTrials = 200;
-  double** bestH = dmatrix(1,3, 1, 3);
-  int mostInliers = 0;
-  while(ransacTrials > 0) {
-    // Randomly select a small subset of points (at least 4)
-    translation *fourRandPoints = new translation[4];
-    int randNums[150];
-    for (int i = 0; i < 150; i++) {
-      randNums[i] = i;
-    }
-    std::random_shuffle(std::begin(randNums), std::end(randNums));
-    for (int i = 0; i < 4; i++) {
-      fourRandPoints[i] = translations[randNums[i]];
-    }
-    double** hNorm = hMatrixCalculation(fourRandPoints);
-    double** H = hNorm;
-    int inliers = 0;
-    for (int i = 0; i < 150; i++) {
-      double final[3];
-      for (int j = 1; j < 4; ++j) {
-          final[j-1] = H[j][1] * translations[i].xOriginal + H[j][2] * translations[i].yOriginal + H[j][3] * 1;
-      }
-      // Project points x to x' to find matches
-      double hypothesisX = final[0]/final[2];
-      double hypothesisY = final[1]/final[2];
-      double xComponent = translations[i].xTranslated - hypothesisX;
-      double yComponent = translations[i].yTranslated - hypothesisY;
-      double diff = sqrt(xComponent*xComponent + yComponent*yComponent);
-      if (diff < threshold) {
-        inliers++;
-      }
-    }
-    if(inliers > mostInliers) {
-      bestH = H;
-      mostInliers = inliers;
-    }
-    ransacTrials -= 1;
-  }
+  // // Search area size should be reasonable (20% image size)
+  // printf("FINDING TRANSLATIONS\n");
+  // translation *translations = new translation[150];
+  // int searchWidth = width/5;
+  // int searchHeight = height/5;
+  // const int offset = 13;
+  // // For each point run a local search
+  // for (int i = 0; i < 150; i++) {
+  //   point curPoint = topValues[i];
+  //   // Search loop should check SSD at each location within the region
+  //   int minX = curPoint.x;
+  //   int minY = curPoint.y;
+  //   double minSum = 999999.0;
+  //   for (int x = curPoint.x - searchWidth; x < curPoint.x + searchWidth; x++) {
+  //     for (int y = curPoint.y - searchHeight; y < curPoint.y + searchHeight; y++) {
+  //       double sum = 0.0;
+  //       for (int i = -offset/2; i < offset/2; i++) {
+  //         for (int j = -offset/2; j < offset/2; j++) {
+  //           // check for bounds
+  //           int xpp = curPoint.x + i;
+  //           int ypp = curPoint.y + j;
+  //           if (xpp < 0 || xpp > width) {
+  //             xpp = curPoint.x;
+  //           }
+  //           if (ypp < 0 || ypp > height) {
+  //             ypp = curPoint.y;
+  //           }
+  //           int xp = x + i;
+  //           int yp = y + j;
+  //           if (xp < 0 || xp > width) {
+  //             xp = curPoint.x;
+  //           }
+  //           if (yp < 0 || yp > height) {
+  //             yp = curPoint.y;
+  //           }
+  //           R2Pixel diff = orig.Pixel(xpp, ypp) - otherImage->Pixel(xp, yp);
+  //           sum += diff.Red()*diff.Red() + diff.Green()*diff.Green() + diff.Blue()*diff.Blue();
+  //         }
+  //       }
+  //       if (sum < minSum) {
+  //         minX = x;
+  //         minY = y;
+  //         minSum = sum;
+  //       }
+  //     }
+  //   }
+  //   // Store the translation vector
+  //   translation curTrans;
+  //   curTrans.xOriginal = curPoint.x;
+  //   curTrans.yOriginal = curPoint.y;
+  //   curTrans.xTranslated = minX;
+  //   curTrans.yTranslated = minY;
+  //   translations[i] = curTrans;
+  // }
 
-  // After N trials, choose the largest inlier set and re-estimate the translation
-  printf("COLOR TRANSLATIONS\n");
-  for (int i = 0; i < 150; i++) {
-    // Determine inliers
-    translation curTrans = translations[i];
-    double final[3];
-    for (int i = 1; i < 4; ++i) {
-        final[i-1] = bestH[i][1] * curTrans.xOriginal + bestH[i][2] * curTrans.yOriginal + bestH[i][3] * 1;
-    }
-    double hypothesisX = final[0]/final[2];
-    double hypothesisY = final[1]/final[2];
-    double xComponent = curTrans.xTranslated - hypothesisX;
-    double yComponent = curTrans.yTranslated - hypothesisY;
-    double diff = sqrt(xComponent*xComponent + yComponent*yComponent);
-    if (diff < threshold) {
-      // inlier is green
-      line((int)curTrans.xOriginal, (int)curTrans.xTranslated, (int)curTrans.yOriginal, (int)curTrans.yTranslated, 0.0, 1.0, 0.0);
-    } else {
-      // outlier is red
-      line((int)curTrans.xOriginal, (int)curTrans.xTranslated, (int)curTrans.yOriginal, (int)curTrans.yTranslated, 1.0, 0.0, 0.0);
-    }
-  }
+  // // RANSAC
+  // printf("RANSAC\n");
+  // const double threshold = 4;
+  // int ransacTrials = 200;
+  // double** bestH = dmatrix(1,3, 1, 3);
+  // int mostInliers = 0;
+  // while(ransacTrials > 0) {
+  //   // Randomly select a small subset of points (at least 4)
+  //   translation *fourRandPoints = new translation[4];
+  //   int randNums[150];
+  //   for (int i = 0; i < 150; i++) {
+  //     randNums[i] = i;
+  //   }
+  //   std::random_shuffle(std::begin(randNums), std::end(randNums));
+  //   for (int i = 0; i < 4; i++) {
+  //     fourRandPoints[i] = translations[randNums[i]];
+  //   }
+  //   double** hNorm = hMatrixCalculation(fourRandPoints);
+  //   double** H = hNorm;
+  //   int inliers = 0;
+  //   for (int i = 0; i < 150; i++) {
+  //     double final[3];
+  //     for (int j = 1; j < 4; ++j) {
+  //         final[j-1] = H[j][1] * translations[i].xOriginal + H[j][2] * translations[i].yOriginal + H[j][3] * 1;
+  //     }
+  //     // Project points x to x' to find matches
+  //     double hypothesisX = final[0]/final[2];
+  //     double hypothesisY = final[1]/final[2];
+  //     double xComponent = translations[i].xTranslated - hypothesisX;
+  //     double yComponent = translations[i].yTranslated - hypothesisY;
+  //     double diff = sqrt(xComponent*xComponent + yComponent*yComponent);
+  //     if (diff < threshold) {
+  //       inliers++;
+  //     }
+  //   }
+  //   if(inliers > mostInliers) {
+  //     bestH = H;
+  //     mostInliers = inliers;
+  //   }
+  //   ransacTrials -= 1;
+  // }
+
+  // // After N trials, choose the largest inlier set and re-estimate the translation
+  // printf("COLOR TRANSLATIONS\n");
+  // for (int i = 0; i < 150; i++) {
+  //   // Determine inliers
+  //   translation curTrans = translations[i];
+  //   double final[3];
+  //   for (int i = 1; i < 4; ++i) {
+  //       final[i-1] = bestH[i][1] * curTrans.xOriginal + bestH[i][2] * curTrans.yOriginal + bestH[i][3] * 1;
+  //   }
+  //   double hypothesisX = final[0]/final[2];
+  //   double hypothesisY = final[1]/final[2];
+  //   double xComponent = curTrans.xTranslated - hypothesisX;
+  //   double yComponent = curTrans.yTranslated - hypothesisY;
+  //   double diff = sqrt(xComponent*xComponent + yComponent*yComponent);
+  //   if (diff < threshold) {
+  //     // inlier is green
+  //     line((int)curTrans.xOriginal, (int)curTrans.xTranslated, (int)curTrans.yOriginal, (int)curTrans.yTranslated, 0.0, 1.0, 0.0);
+  //   } else {
+  //     // outlier is red
+  //     line((int)curTrans.xOriginal, (int)curTrans.xTranslated, (int)curTrans.yOriginal, (int)curTrans.yTranslated, 1.0, 0.0, 0.0);
+  //   }
+  // }
 }
 
 void R2Image::
