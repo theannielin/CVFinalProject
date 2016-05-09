@@ -84,9 +84,21 @@ class R2Image {
   void blendOtherImageTranslated(R2Image * otherImage);
   void blendOtherImageHomography(R2Image * otherImage);
 
+  // magic frame - to contain pairs (x,y) - image coordinates
+  struct coordinates {
+    int x;
+    int y;
+  };
+
+  struct point {
+  int x;
+  int y;
+  double val;
+};
+
   // magic frame -- final project operations
   void magicFeature();
-  bool clusters(int x, int y);
+  bool clusters(coordinates center);
   void magicReplaceFrameContent(R2Image * nextImage);
   void magicExtractFrozen(void);
 
@@ -99,18 +111,6 @@ class R2Image {
   int WriteBMP(const char *filename) const;
   int WritePPM(const char *filename, int ascii = 0) const;
   int WriteJPEG(const char *filename) const;
-
-  // magic frame - to contain pairs (x,y) - image coordinates
-  struct coordinates {
-    int x;
-    int y;
-  };
-
-  struct point {
-  int x;
-  int y;
-  double val;
-};
 
  private:
   // Utility functions

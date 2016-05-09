@@ -983,6 +983,13 @@ R2Image freezeFrame;
 double sigma = 3.0;
 double alpha = 0.04;
 
+R2Pixel red = R2red_pixel;
+R2Pixel green = R2green_pixel;
+R2Pixel blue = R2blue_pixel;
+R2Pixel black = R2black_pixel;
+R2Pixel white = R2white_pixel;
+
+
 void R2Image::magicFeature(void) {
 
   /* HARRIS FEATURE DETECTOR */ 
@@ -1082,10 +1089,23 @@ void R2Image::magicFeature(void) {
   }
 }
 
-bool R2Image::clusters(int x, int y) {
+// constants for identifying trackers
+double threshold = 0.3; // color -- need to tighten this
+int radius = 3; // pixels to search around the center -- potentially widen this
+
+bool R2Image::clusters(coordinates center, R2Pixel color) {
   // Tracker identification
   // TODO check if feature point is surrounded by clusters of R/G/B/Bl, and clusters of white
+  // NEED: threshold for RGB vals + local search range around center point? can't assume size
   // Returns true for now
+
+  for (int i = -1 * radius; i < radius + 1; i++) {
+    for (int j = -1 * radius; j < radius + 1; i++) {
+      // compare difference between "dominant" value and the other two; check if within threshold
+      // for now just comparing red values
+      
+    }
+  }
   return true;
 }
 
