@@ -400,17 +400,18 @@ Blur(double sigma)
   (*this) = temp2;
 }
 
-struct point {
-  int x;
-  int y;
-  double val;
-};
+// CHANGED THIS TO R2IMAGE::POINT, CHANGED ALL OTHER METHODS ACCORDINGLY
+// struct point {
+//   int x;
+//   int y;
+//   double val;
+// };
 
 
 int compare(const void * p1, const void * p2) {
-  if ((*(point*)p1).val < (*(point*)p2).val) {
+  if ((*(R2Image::point*)p1).val < (*(R2Image::point*)p2).val) {
     return 1;
-  } else if ((*(point*)p1).val > (*(point*)p2).val) {
+  } else if ((*(R2Image::point*)p1).val > (*(R2Image::point*)p2).val) {
     return -1;
   } else {
     return 0;
@@ -967,7 +968,16 @@ blendOtherImageHomography(R2Image * otherImage)
   }
 }
 
-// MAGIC FRAME FINAL PROJECT 
+
+
+
+
+///////////////////////////////
+/* FRAME FINAL PROJECT */
+///////////////////////////////
+
+
+
 
 R2Image freezeFrame; 
 double sigma = 3.0;
@@ -1030,7 +1040,7 @@ void R2Image::magicFeature(void) {
   
   // Find 150 features with very high corner score
   printf("FINDING FEATURES\n");
-  point *topValues = new point[150];
+  // point *topValues = new point[150];
   
   int featureCount = 0;
   
@@ -1040,8 +1050,8 @@ void R2Image::magicFeature(void) {
     // Make sure there is at least 10 pixel distance between them
     for (int feat = 0; feat < featureCount; feat++) {
   
-      int x = topValues[feat].x - curPoint.x;
-      int y = topValues[feat].y - curPoint.y;
+      int x = this->topValues[feat].x - curPoint.x;
+      int y = this->topValues[feat].y - curPoint.y;
   
       if (sqrt(x*x + y*y) < 10) {
         close = true;
@@ -1054,7 +1064,7 @@ void R2Image::magicFeature(void) {
   
     }
   
-    topValues[featureCount++] = curPoint;
+    this->topValues[featureCount++] = curPoint;
   }
 
   // output for now: blue square over each feature point

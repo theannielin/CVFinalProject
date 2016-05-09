@@ -106,6 +106,12 @@ class R2Image {
     int y;
   };
 
+  struct point {
+  int x;
+  int y;
+  double val;
+};
+
  private:
   // Utility functions
   void Resize(int width, int height);
@@ -116,6 +122,7 @@ class R2Image {
   int npixels;
   int width;
   int height;
+  point topValues[150];
   coordinates frame_corners[4]; // magic frame - contains detected coordinates of frame corners
   double hMatrix[3][3]; // magic frame - H matrix of 3x3 transformation between frames
 };
