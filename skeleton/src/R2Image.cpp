@@ -18,6 +18,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 
+
 R2Image::
 R2Image(void)
   : pixels(NULL),
@@ -1093,6 +1094,16 @@ bool R2Image::clusters(int x, int y) {
 void R2Image::
 magicExtractFrozen(void)
 {
+
+  //for now, I'm just manually setting frame_corners to the top left quarter of the image.
+  frame_corners[0].x = 200; //setting upper left point.
+  frame_corners[0].y = 300;
+  frame_corners[1].x = 500; //setting upper right point.
+  frame_corners[1].y = 300;
+  frame_corners[2].x = 500; //setting lower right point.
+  frame_corners[2].y = 100;
+  frame_corners[3].x = 200; //setting lower left point.
+  frame_corners[3].y = 100;
   // TODO add a red cross in middle of image for now
   // TODO Detect and store the "frame" information
   // TODO set freezeFrame to dimensions of the frame according to frame_corners
@@ -1109,22 +1120,199 @@ magicExtractFrozen(void)
   }
 }
 
+
+R2Image::line_equation computeLine(R2Image::coordinates a, R2Image::coordinates b){
+  R2Image::line_equation answer = {}; //initalizing all values in answer to zero.
+  //important so that answer.vertical is initialized to 0.
+  if(a.x == b.x){
+    answer.vertical = true;
+    answer.b = a.x;
+  }else{
+    answer.m = (a.y - b.y)/(double)(a.x - b.x);
+    answer.b = a.y - a.x * answer.m;
+  }
+  return answer;
+}
+
+R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
+  R2Image::coordinates answer = {};
+  double x_prime_val;
+  double y_prime_val;
+  double z_prime_val;
+ 
+  x_prime_val  = H[1][1] * x_val;
+  x_prime_val += H[1][2] * y_val;
+  x_prime_val += H[1][3];
+
+  y_prime_val  = H[2][1] * x_val;
+  y_prime_val += H[2][2] * y_val;
+  y_prime_val += H[2][3];
+
+  z_prime_val  = H[3][1];
+  z_prime_val += H[3][2];
+  z_prime_val += H[3][3];
+
+  answer.x = x_prime_val / z_prime_val;
+  answer.y = y_prime_val / z_prime_val;
+  return answer;
+}
+
 void R2Image::
 magicReplaceFrameContent(R2Image * nextImage)
 {
-  // TODO add a green cross in middle of image for now
-  // Replace the stuff inside the frame with frozen image 
-  printf("GOT TO FRAME CONTENT FUNCTION\n");
-  R2Pixel red = R2Pixel(0.0, 1.0, 0.0, 0.0);
-  int centerX = width/2;
-  int centerY = height/2;
-  for (int i = 0; i < 5; i++) {
-    nextImage->Pixel(centerX - i, centerY) = red;
-    nextImage->Pixel(centerX, centerY  - i) = red;
-    nextImage->Pixel(centerX + i, centerY) = red;
-    nextImage->Pixel(centerX, centerY + i) = red;
+
+  /*R2Image::coordinates a;
+  a.x = 1;
+  a.y = 1;
+  R2Image::coordinates b;
+  b.x = 1;
+  b.y = 0;
+
+  R2Image::line_equation answer;
+  answer = computeLine(a,b);
+  fprintf(stdout, "is vertical? %d", answer.vertical);
+  fprintf(stdout, "y = %fx + %f", answer.m, answer.b);
+*/
+
+
+
+  double** H = dmatrix(1,3, 1, 3);
+  translation trans[4]; //this'll store the upper left, upper right,lower right, lower left
+  //translations in that order (also if you think of a more descriptive name than "trans" I'm all ears.)
+  
+
+  //shifted_frame should store the points of the frame after shifting.
+  //I'm of the opinion that shifted_frame should be calculated outside of this function 
+  //(as a separate function call right befor this one in imgpro.cpp) and fed into
+  //this function as an argument, but it can also be calculated right here.
+  //for now I'm just gonna hard code it.
+
+  coordinates shifted_frame[4];
+  
+  shifted_frame[0].x = 400;
+  shifted_frame[0].y = 150;
+
+  shifted_frame[1].x = 120;
+  shifted_frame[1].y = 100;
+
+  shifted_frame[2].x = 100;
+  shifted_frame[2].y = 300;
+  
+  shifted_frame[3].x = 200;
+  shifted_frame[3].y = 350;
+
+
+ /*
+  0-------1
+  |       | 
+  |       |
+  |       |
+  3-------2
+  */
+
+  //sneaky sneaky. In order to get the matrix that warps nextImage to original image I plug the numbers in backward.
+  for(int i = 0; i < 4; i++){
+    //frame_corners stores the upper left, upper right, lower left, lower right positions of the frame corners.
+    trans[i].xTranslated = frame_corners[i].x;
+    trans[i].yTranslated = frame_corners[i].y;
+    trans[i].xOriginal = shifted_frame[i].x;
+    trans[i].yOriginal = shifted_frame[i].y;
   }
+  H = hMatrixCalculation(trans);
+  //important to note: This H should map points from the nextImage to the original image
+  //not the other way round. This is so we can inverse warp.
+
+
+  //all bets are off for the orientation of the corners.
+  //the frame could have been twirled around a couple times.
+  int leftmost = shifted_frame[0].x;
+  int rightmost = shifted_frame[0].x;
+  int topmost = shifted_frame[0].y;
+  int botmost = shifted_frame[0].y;
+  for(int i = 0; i < 4; i++){
+    if(shifted_frame[i].x < leftmost){
+      leftmost = shifted_frame[i].x;
+    }
+    if(shifted_frame[i].x > rightmost){
+      rightmost = shifted_frame[i].x;
+    }
+    if(shifted_frame[i].y > topmost){
+      topmost = shifted_frame[i].y;
+    }
+    if(shifted_frame[i].y < botmost){
+      botmost = shifted_frame[i].y;
+    }
+  }
+
+  R2Image::line_equation frame[4];
+  for(int i = 0; i < 4; i++){
+    frame[i] = computeLine(shifted_frame[i], shifted_frame[(i + 1) % 4]);
+  }
+
+  //look_down[i] = true if the frame is positioned below frame[i] and vice versa.
+  bool look_down[4] = {}; //gotta zero all the values in look_down.
+
+  for(int i = 0; i < 4; i++){
+    //if the line is vertical then we don't need to compute anything
+    if(!frame[i].vertical){
+      //frame[i] holds the equation for the line thru shifted_frame[i] and shifted_frame[(i + 1)%4]
+      //that means we have to check if one of the points not on the line frame[i] is below or above
+      //said line.
+      if(shifted_frame[(i + 2) % 4].y < (frame[i].m * shifted_frame[(i + 2) % 4].x + frame[i].b)){
+        look_down[i] = 1;
+      }
+    }
+  }
+
+  bool in_frame = 1;
+  R2Image::coordinates original_pix_pos;
+  for(int i = leftmost; i < rightmost; i++){
+    for(int j = botmost; j < topmost; j++){
+      in_frame = 1; //reset in_frame to be 1.
+      for(int x = 0; x < 4; x++){
+        //if the frame is vertical don't worry about it. 
+        //you ain't got to touch it at all. the outer two for loops will deal with it.
+        if(!frame[x].vertical){ 
+          if(look_down[x]){ //if we should be looking down
+            //this point should be below or on the line. if not then it's not in the frame.
+            if(j > (frame[x].m * i + frame[x].b)){
+              in_frame = 0;
+            }
+          }else{ //else we should be looking up
+            //likewise, this point should be above or on the line, or else...
+            if(j < (frame[x].m * i + frame[x].b)){
+              in_frame = 0;
+            } 
+          }
+        }
+      }
+      if(in_frame){
+        //okay in here it's all about inverse warping.
+        original_pix_pos = matrixMult(i,j, H);
+        //fprintf(stdout, "width and height of original: %d    %d \n", width, height);
+        //fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
+        nextImage->Pixel(i, j) = this->Pixel(original_pix_pos.x, original_pix_pos.y);
+      }
+    }
+  }
+
+
+
+  // // TODO add a green cross in middle of image for now
+  // // Replace the stuff inside the frame with frozen image 
+  printf("GOT TO FRAME CONTENT FUNCTION\n");
+  // R2Pixel red = R2Pixel(0.0, 1.0, 0.0, 0.0);
+  // int centerX = width/2;
+  // int centerY = height/2;
+  // for (int i = 0; i < 5; i++) {
+  //   nextImage->Pixel(centerX - i, centerY) = red;
+  //   nextImage->Pixel(centerX, centerY  - i) = red;
+  //   nextImage->Pixel(centerX + i, centerY) = red;
+  //   nextImage->Pixel(centerX, centerY + i) = red;
+  // }
 }
+
+
 
 
 

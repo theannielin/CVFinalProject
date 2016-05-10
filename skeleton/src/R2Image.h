@@ -48,6 +48,8 @@ class R2Image {
   int Width(void) const;
   int Height(void) const;
 
+
+
   // Pixel access/update
   R2Pixel& Pixel(int x, int y);
   R2Pixel *Pixels(void);
@@ -112,6 +114,16 @@ class R2Image {
   double val;
 };
 
+//y = mx + b
+//if vertical then the line is vertical and x = b;
+//note: I called it line_equation b/c there's a method "line" in R2Image already.
+struct line_equation {
+  bool vertical;
+  double m;
+  double b;
+};
+
+
  private:
   // Utility functions
   void Resize(int width, int height);
@@ -124,6 +136,17 @@ class R2Image {
   int height;
   point topValues[150];
   coordinates frame_corners[4]; // magic frame - contains detected coordinates of frame corners
+
+  //frame_corners stores the position of the upper left, upper right,
+  // lower right, lower left corners in that order of the frame in frozen_image.
+  /*
+  0-------1
+  |       | 
+  |       |
+  |       |
+  3-------2
+  */
+
   double hMatrix[3][3]; // magic frame - H matrix of 3x3 transformation between frames
 };
 
