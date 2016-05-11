@@ -98,9 +98,18 @@ class R2Image {
   double val;
 };
 
+//y = mx + b
+//if vertical then the line is vertical and x = b;
+//note: I called it line_equation b/c there's a method "line" in R2Image already.
+struct line_equation {
+  bool vertical;
+  double m;
+  double b;
+};
+
   // magic frame -- final project operations
   void magicFeature();
-  bool clusters(coordinates center);
+  bool clusters(coordinates center, R2Pixel color);
   void magicReplaceFrameContent(R2Image * nextImage);
   void magicExtractFrozen(void);
 
@@ -113,27 +122,6 @@ class R2Image {
   int WriteBMP(const char *filename) const;
   int WritePPM(const char *filename, int ascii = 0) const;
   int WriteJPEG(const char *filename) const;
-
-  // magic frame - to contain pairs (x,y) - image coordinates
-  struct coordinates {
-    int x;
-    int y;
-  };
-
-  struct point {
-  int x;
-  int y;
-  double val;
-};
-
-//y = mx + b
-//if vertical then the line is vertical and x = b;
-//note: I called it line_equation b/c there's a method "line" in R2Image already.
-struct line_equation {
-  bool vertical;
-  double m;
-  double b;
-};
 
  private:
   // Utility functions

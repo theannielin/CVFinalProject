@@ -11,6 +11,8 @@
 #include <iostream>
 #include <time.h>
 
+using namespace std;
+
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -1078,16 +1080,38 @@ void R2Image::magicFeature(void) {
   // output for now: blue square over each feature point
   // TODO look for features of trackers and mark these with larger squares
   // TODO save detected four corners in this->frame_corners array
-  R2Pixel BLUE = R2Pixel(0,0,1,1);
-  for (int i = 139; i < 150; i++) {
-    point cur = topValues[i];
-    for (int j = -5; j < 6; j++) {
-      for(int z = -5; z < 6; z++){
-        Pixel(cur.x + j, cur.y + z) = BLUE;
+
+  R2Image::coordinates temp = {};
+  R2Pixel BLUE = R2blue_pixel;
+
+  // note: when only looking for feature points with red px, only found 1/5 corners of the tracker
+
+  int num_foundPoints = 0;
+  for (int i = 0; i < 150; i++) {
+    temp.x = this->topValues[i].x;
+    temp.y = this->topValues[i].y;
+    
+    if (clusters(temp, BLUE)) {
+      num_foundPoints += 1;
+      cout << "Feature point " << i << endl;
+      cout << "Coordinates " << temp.x << " " << temp.y << endl;
+      for (int j = -5; j < 6; j++) {
+        for(int z = -5; z < 6; z++){
+          Pixel(temp.x + j, temp.y + z) = BLUE;
+        }
       }
     }
-    
   }
+
+  cout << "found " << num_foundPoints << " points" << endl;
+  // for (int i = 139; i < 150; i++) {
+  //   point cur = topValues[i];
+  //   for (int j = -5; j < 6; j++) {
+  //     for(int z = -5; z < 6; z++){
+  //       Pixel(cur.x + j, cur.y + z) = BLUE;
+  //     }
+  //   }
+  // }
 }
 
 // constants for identifying trackers
@@ -1096,18 +1120,43 @@ int radius = 3; // pixels to search around the center -- potentially widen this
 
 bool R2Image::clusters(coordinates center, R2Pixel color) {
   // Tracker identification
-  // TODO check if feature point is surrounded by clusters of R/G/B/Bl, and clusters of white
-  // NEED: threshold for RGB vals + local search range around center point? can't assume size
-  // Returns true for now
+  // TODO check if px surrounding feature points are similar to input color
+  // TODO extract center feature point of tracker
+  // Searches for red tracker and finds all 5 feature points of tracker for now
+
+
+  int num_redPoints = 0;
+  int num_whitePoints = 0;
 
   for (int i = -1 * radius; i < radius + 1; i++) {
-    for (int j = -1 * radius; j < radius + 1; i++) {
+    for (int j = -1 * radius; j < radius + 1; j++) {
+
+      if (i + center.x < 0 || i + center.x > width || j + center.y < 0 || j + center.y > height) {
+        cout << "falls off edge " << endl;
+        cout << "pixel " << i+center.x << " " << j+center.y << endl;
+        continue;
+      }
       // compare difference between "dominant" value and the other two; check if within threshold
       // for now just comparing red values
-      
+      if (Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold 
+        && Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
+        num_redPoints += 1;
+      }
+
+      // if ((Pixel(i + center.x,j + center.y).Red() + Pixel(i + center.x,j + center.y).Blue() + Pixel(i + center.x,j + center.y).Green()) / 3 >= 1 - threshold) {
+      //   num_whitePoints += 1;
+      // }
     }
   }
-  return true;
+
+  // cout << "number of white points " << num_whitePoints << "\n" << endl;
+
+  if (num_whitePoints > 0 || num_redPoints > 0) {
+    cout << "\nnumber of red points " << num_redPoints << endl;
+    return true;
+  }
+
+  return false;
 }
 
 
