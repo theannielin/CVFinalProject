@@ -1110,6 +1110,16 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
   return true;
 }
 
+R2Image::frame R2Image::
+findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]){
+  // Will run a local search using the previous frame coordinated to find new shifted frame
+  frame new_frame;
+  for(int i = 0; i < 4; i++){
+    new_frame.coordinates[i] = prev_frame[i];
+  }
+  return new_frame;
+}
+
 
 void R2Image::
 magicExtractFrozen(void)
@@ -1178,7 +1188,7 @@ R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
 }
 
 void R2Image::
-magicReplaceFrameContent(R2Image * nextImage)
+magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
 {
 
   /*R2Image::coordinates a;
@@ -1209,17 +1219,17 @@ magicReplaceFrameContent(R2Image * nextImage)
 
   coordinates shifted_frame[4];
   
-  shifted_frame[0].x = 400;
-  shifted_frame[0].y = 150;
+  shifted_frame[0].x = sh_frame.coordinates[0].x;
+  shifted_frame[0].y = sh_frame.coordinates[0].y;
 
-  shifted_frame[1].x = 120;
-  shifted_frame[1].y = 100;
+  shifted_frame[1].x = sh_frame.coordinates[1].x;
+  shifted_frame[1].y = sh_frame.coordinates[1].y;
 
-  shifted_frame[2].x = 100;
-  shifted_frame[2].y = 300;
+  shifted_frame[2].x = sh_frame.coordinates[2].x;
+  shifted_frame[2].y = sh_frame.coordinates[2].y;
   
-  shifted_frame[3].x = 200;
-  shifted_frame[3].y = 350;
+  shifted_frame[3].x = sh_frame.coordinates[3].x;
+  shifted_frame[3].y = sh_frame.coordinates[3].y;
 
 
  /*

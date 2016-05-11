@@ -93,15 +93,20 @@ class R2Image {
   };
 
   struct point {
-  int x;
-  int y;
-  double val;
-};
+    int x;
+    int y;
+    double val;
+  };
+
+  struct frame {
+    coordinates coordinates[4];
+  };
 
   // magic frame -- final project operations
   void magicFeature();
-  bool clusters(coordinates center);
-  void magicReplaceFrameContent(R2Image * nextImage);
+  bool clusters(coordinates center, R2Pixel color);
+  frame findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]);
+  void magicReplaceFrameContent(R2Image * nextImage, frame shifted_frame);
   void magicExtractFrozen(void);
 
   // File reading/writing
@@ -114,28 +119,16 @@ class R2Image {
   int WritePPM(const char *filename, int ascii = 0) const;
   int WriteJPEG(const char *filename) const;
 
-  // magic frame - to contain pairs (x,y) - image coordinates
-  struct coordinates {
-    int x;
-    int y;
+  //y = mx + b
+  //if vertical then the line is vertical and x = b;
+  //note: I called it line_equation b/c there's a method "line" in R2Image already.
+  struct line_equation {
+    bool vertical;
+    double m;
+    double b;
   };
 
-  struct point {
-  int x;
-  int y;
-  double val;
-};
-
-//y = mx + b
-//if vertical then the line is vertical and x = b;
-//note: I called it line_equation b/c there's a method "line" in R2Image already.
-struct line_equation {
-  bool vertical;
-  double m;
-  double b;
-};
-
- private:
+ public:
   // Utility functions
   void Resize(int width, int height);
   R2Pixel Sample(double u, double v,  int sampling_method);

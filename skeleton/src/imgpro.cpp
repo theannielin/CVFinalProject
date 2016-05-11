@@ -248,9 +248,17 @@ main(int argc, char **argv)
       std::string outname(output_image_name);
       std::size_t out_last_slash = outname.find_last_of("/");
       argv += 2, argc -= 2;
+      
       // Extract the frozen image from the first image
       image->magicExtractFrozen();
       image->Write(outname.c_str());
+
+      // Initialize the first frame coordinates for local search on other images later
+      R2Image::coordinates prev_frame[4];
+      for(int i = 0; i < 4; i++){
+        prev_frame[i] = image->frame_corners[i];
+      }
+
       // For all the other images, replace the frame with the extracted image
       for (int i = 1; i < numImages; i++) {
         filename = filename.substr(0, file_last_slash+1);
@@ -268,7 +276,11 @@ main(int argc, char **argv)
         filename.append(std::to_string(i)).append(".jpg");
         outname.append(std::to_string(i)).append(".jpg");
         R2Image *next_image = new R2Image(filename.c_str());
-        image->magicReplaceFrameContent(next_image);
+
+        // Find the shifted frame and use those coordinated to replace frame image
+        R2Image::frame shifted_frame = image->findShiftedFrame(next_image, prev_frame);
+        image->magicReplaceFrameContent(next_image, shifted_frame);
+
         next_image->Write(outname.c_str());
         delete next_image;
       }
