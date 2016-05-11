@@ -1113,9 +1113,11 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
 R2Image::frame R2Image::
 findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]){
   // Will run a local search using the previous frame coordinated to find new shifted frame
+  // TODO Annie do it lol
   frame new_frame;
   for(int i = 0; i < 4; i++){
     new_frame.coordinates[i] = prev_frame[i];
+    // printf("COORDS (%d, %d)\n", new_frame.coordinates[i].x, new_frame.coordinates[i].y);
   }
   return new_frame;
 }
