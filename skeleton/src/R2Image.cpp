@@ -1169,20 +1169,44 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
   return false;
 }
 
+R2Image::frame R2Image::
+findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]){
+  // Will run a local search using the previous frame coordinated to find new shifted frame
+  // TODO Annie do it lol
+  frame new_frame;
+
+
+  prev_frame[0].x = 464; //setting upper left point.
+  prev_frame[0].y = 222;
+  prev_frame[1].x = 249; //setting upper right point.
+  prev_frame[1].y = 200;
+  prev_frame[2].x = 259; //setting lower right point.
+  prev_frame[2].y = 47;
+  prev_frame[3].x = 473; //setting lower left point.
+  prev_frame[3].y = 55;
+
+
+  for(int i = 0; i < 4; i++){
+    new_frame.coordinates[i] = prev_frame[i];
+    // printf("COORDS (%d, %d)\n", new_frame.coordinates[i].x, new_frame.coordinates[i].y);
+  }
+  return new_frame;
+}
+
 
 void R2Image::
 magicExtractFrozen(void)
 {
 
   //for now, I'm just manually setting frame_corners to the top left quarter of the image.
-  frame_corners[0].x = 200; //setting upper left point.
-  frame_corners[0].y = 300;
-  frame_corners[1].x = 500; //setting upper right point.
-  frame_corners[1].y = 300;
-  frame_corners[2].x = 500; //setting lower right point.
-  frame_corners[2].y = 100;
-  frame_corners[3].x = 200; //setting lower left point.
-  frame_corners[3].y = 100;
+  frame_corners[0].x = 464; //setting upper left point.
+  frame_corners[0].y = 222;
+  frame_corners[1].x = 249; //setting upper right point.
+  frame_corners[1].y = 200;
+  frame_corners[2].x = 259; //setting lower right point.
+  frame_corners[2].y = 47;
+  frame_corners[3].x = 473; //setting lower left point.
+  frame_corners[3].y = 55;
   // TODO add a red cross in middle of image for now
   // TODO Detect and store the "frame" information
   // TODO set freezeFrame to dimensions of the frame according to frame_corners
@@ -1237,7 +1261,7 @@ R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
 }
 
 void R2Image::
-magicReplaceFrameContent(R2Image * nextImage)
+magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
 {
 
   /*R2Image::coordinates a;
@@ -1268,17 +1292,17 @@ magicReplaceFrameContent(R2Image * nextImage)
 
   coordinates shifted_frame[4];
   
-  shifted_frame[0].x = 400;
-  shifted_frame[0].y = 150;
+  shifted_frame[0].x = sh_frame.coordinates[0].x;
+  shifted_frame[0].y = sh_frame.coordinates[0].y;
 
-  shifted_frame[1].x = 120;
-  shifted_frame[1].y = 100;
+  shifted_frame[1].x = sh_frame.coordinates[1].x;
+  shifted_frame[1].y = sh_frame.coordinates[1].y;
 
-  shifted_frame[2].x = 100;
-  shifted_frame[2].y = 300;
+  shifted_frame[2].x = sh_frame.coordinates[2].x;
+  shifted_frame[2].y = sh_frame.coordinates[2].y;
   
-  shifted_frame[3].x = 200;
-  shifted_frame[3].y = 350;
+  shifted_frame[3].x = sh_frame.coordinates[3].x;
+  shifted_frame[3].y = sh_frame.coordinates[3].y;
 
 
  /*
@@ -1379,7 +1403,7 @@ magicReplaceFrameContent(R2Image * nextImage)
 
   // // TODO add a green cross in middle of image for now
   // // Replace the stuff inside the frame with frozen image 
-  printf("GOT TO FRAME CONTENT FUNCTION\n");
+  // printf("GOT TO FRAME CONTENT FUNCTION\n");
   // R2Pixel red = R2Pixel(0.0, 1.0, 0.0, 0.0);
   // int centerX = width/2;
   // int centerY = height/2;
