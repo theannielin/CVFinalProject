@@ -1242,7 +1242,7 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
 R2Image::frame R2Image::
 findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_frame[4]){
   // Will run a local search using the previous frame coordinated to find new shifted frame
-frame new_frame;
+  frame new_frame;
 
   // Search area size should be reasonable
   int searchWidth = width/5;

@@ -3,7 +3,7 @@
 TODO's marked in R2Image.cpp.
 ## Usage
 src/imgpro input/0000000.jpg output/0000000.jpg -magic NUMBER_OF_IMAGES  
-Example: src/imgpro input/0000000.jpg output/0000000.jpg -magic 80
+Example: src/imgpro input/0000000.jpg output/0000000.jpg -magic 60
 ## Step 1: Setup
 ### Iterate through images and call the correct functions on them
 DONE: -magic tag in imgpro.cpp  
