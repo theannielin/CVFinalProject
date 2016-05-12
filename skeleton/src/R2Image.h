@@ -152,10 +152,10 @@ struct line_equation {
   */
 
   double hMatrix[3][3]; // magic frame - H matrix of 3x3 transformation between frames
-  vector<point> redTracker;
-  vector<point> greenTracker;
-  vector<point> blueTracker;
-  vector<point> blackTracker;
+  // vector<coordinates> redTracker;
+  // vector<point> greenTracker;
+  // vector<point> blueTracker;
+  // vector<point> blackTracker;
   
 };
 

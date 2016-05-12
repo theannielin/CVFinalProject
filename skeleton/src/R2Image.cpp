@@ -981,14 +981,26 @@ blendOtherImageHomography(R2Image * otherImage)
 
 
 R2Image freezeFrame; 
+
+// constants for identifying trackers
+double threshold = 0.3; // color -- need to tighten this
+double whiteThreshold = 0.5;
+int radius = 3; // pixels to search around the center -- potentially widen this
+
 double sigma = 3.0;
 double alpha = 0.04;
+int numFeaturePoints = 300;
+int minFeatureDistance = 10;
 
-R2Pixel red = R2red_pixel;
-R2Pixel green = R2green_pixel;
-R2Pixel blue = R2blue_pixel;
-R2Pixel black = R2black_pixel;
-R2Pixel white = R2white_pixel;
+R2Pixel red = R2Pixel(1,0,0,1);
+R2Pixel green = R2Pixel(0,1,0,1);
+R2Pixel blue = R2Pixel(0,0,1,1);;
+R2Pixel black = R2Pixel(0,0,0,1);
+R2Pixel white = R2Pixel(1,1,1,1);
+
+// test
+vector<R2Image::coordinates> redTracker;
+vector<R2Image::coordinates> whiteTracker;
 
 
 void R2Image::magicFeature(void) {
@@ -1047,12 +1059,11 @@ void R2Image::magicFeature(void) {
   qsort(values, width * height, sizeof(point), compare);
   
   // Find 150 features with very high corner score
-  printf("FINDING FEATURES\n");
-  // point *topValues = new point[150];
+  cout << "FINDING FEATURES" << endl;
   
   int featureCount = 0;
   
-  for (int idx = 0; featureCount < 150 && idx < width*height; idx++) {
+  for (int idx = 0; featureCount < numFeaturePoints && idx < width*height; idx++) {
     point curPoint = values[idx];
     bool close = false;
     // Make sure there is at least 10 pixel distance between them
@@ -1061,7 +1072,7 @@ void R2Image::magicFeature(void) {
       int x = this->topValues[feat].x - curPoint.x;
       int y = this->topValues[feat].y - curPoint.y;
   
-      if (sqrt(x*x + y*y) < 10) {
+      if (sqrt(x*x + y*y) < minFeatureDistance) {
         close = true;
       }
   
@@ -1080,45 +1091,81 @@ void R2Image::magicFeature(void) {
   // TODO save detected four corners in this->frame_corners array
 
   R2Image::coordinates temp = {};
-  R2Pixel BLUE = R2blue_pixel;
 
   // note: when only looking for feature points with red px, only found 1/5 corners of the tracker
 
   int num_foundPoints = 0;
-  for (int i = 0; i < 150; i++) {
+  for (int i = 0; i < numFeaturePoints; i++) {
     temp.x = this->topValues[i].x;
     temp.y = this->topValues[i].y;
     
-    if (clusters(temp, BLUE)) {
+    // only looking for red tracker for now
+    if (clusters(temp, red)) {
       num_foundPoints += 1;
       cout << "Feature point " << i << endl;
       cout << "Coordinates " << temp.x << " " << temp.y << endl;
-
-      this->redTracker.push_back(topValues[i]);
+      cout << "tracker vector size " << redTracker.size() << endl;
+      redTracker.push_back(temp);
+      cout << "pushes back point" << endl;
 
       // color found feature points
-      for (int j = -5; j < 6; j++) {
-        for(int z = -5; z < 6; z++){
-          Pixel(temp.x + j, temp.y + z) = BLUE;
+      // for (int j = -3; j < 4; j++) {
+      //   for(int z = -3; z < 4; z++){
+      //     if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
+      //       continue;
+      //     }
+      //     Pixel(temp.x + j, temp.y + z) = blue;
+      //   }
+      // }
+
+    }
+
+    // color the rest of the pixels in a different color
+    // else {
+    //   for (int j = -3; j < 4; j++) {
+    //     for(int z = -3; z < 4; z++){
+    //       if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
+    //         continue;
+    //       }
+    //       Pixel(temp.x + j, temp.y + z) = green;
+    //     }
+    //   }
+    // }
+
+  }
+
+  // iterate through "tracker" vectors and find the ones surrounded by white clusters
+  for (int index = 0; index < redTracker.size(); index++) {
+
+    temp.x = redTracker[index].x;
+    temp.y = redTracker[index].y;
+
+    if (clusters(temp, white)) {
+      cout << "Found white cluster at " << temp.x << " " << temp.y << endl;
+      whiteTracker.push_back(temp);
+      // color these points in green
+      for (int j = -3; j < 4; j++) {
+        for(int z = -3; z < 4; z++){
+          if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
+            continue;
+          }
+          Pixel(temp.x + j, temp.y + z) = green;
         }
       }
+
     }
   }
 
-  cout << "found " << num_foundPoints << " points" << endl;
-  // for (int i = 139; i < 150; i++) {
-  //   point cur = topValues[i];
-  //   for (int j = -5; j < 6; j++) {
-  //     for(int z = -5; z < 6; z++){
-  //       Pixel(cur.x + j, cur.y + z) = BLUE;
-  //     }
-  //   }
-  // }
-}
 
-// constants for identifying trackers
-double threshold = 0.3; // color -- need to tighten this
-int radius = 3; // pixels to search around the center -- potentially widen this
+  cout << "found " << num_foundPoints << " points" << endl;
+  for (int i = 0; i < redTracker.size(); i++) {
+    cout << "red point " << redTracker[i].x << " " << redTracker[i].y << endl;
+  }
+  for (int i = 0; i < whiteTracker.size(); i++) {
+    cout << "white point " << whiteTracker[i].x << " " << whiteTracker[i].y << endl;
+  }
+
+}
 
 bool R2Image::clusters(coordinates center, R2Pixel color) {
   // Tracker identification
@@ -1129,7 +1176,26 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
   // have vectors for points associated with certain trackers?
 
   int num_redPoints = 0;
+  int num_greenPoints = 0;
+  int num_bluePoints = 0;
   int num_whitePoints = 0;
+
+  // detect search color
+  bool red = false;
+  bool green = false;
+  bool blue = false;
+  bool white = false;
+
+  if (color.Red() == 1 && color.Green() == 1 && color.Blue() == 1) {
+    cout << "looking for white clusters" << endl;
+    white = true;
+  } else if (color.Red() > 0) {
+    red = true;
+  } else if (color.Green() > 0) {
+    green = true;
+  } else if (color.Blue() > 0) {
+    blue = true;
+  } 
 
   for (int i = -1 * radius; i < radius + 1; i++) {
     for (int j = -1 * radius; j < radius + 1; j++) {
@@ -1139,30 +1205,34 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      // compare difference between "dominant" value and the other two; check if within threshold
-      // for now just comparing red values
-      if (Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold 
-        && Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
+      // looking for red clusters
+      if (red &&
+        Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold &&
+        Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
+        
         num_redPoints += 1;
       }
 
-      // looking for white image
-      if (1 - Pixel(i + center.x, j).Red() <= threshold &&
-          1 - Pixel(i + center.x, j).Green() <= threshold &&
-          1 - Pixel(i + center.x, j).Blue() <= threshold) {
+      cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " << Pixel(i + center.x, j + center.y).Green() << " " << Pixel(i + center.x, j + center.y).Blue() << endl;
+
+      // looking for white clusters
+      if (white &&
+          1 - Pixel(i + center.x, j + center.y).Red() <= whiteThreshold &&
+          1 - Pixel(i + center.x, j + center.y).Green() <= whiteThreshold &&
+          1 - Pixel(i + center.x, j + center.y).Blue() <= whiteThreshold) {
+        cout << "found white point" << endl;
         num_whitePoints += 1;
       }
 
-      // if ((Pixel(i + center.x,j + center.y).Red() + Pixel(i + center.x,j + center.y).Blue() + Pixel(i + center.x,j + center.y).Green()) / 3 >= 1 - threshold) {
-      //   num_whitePoints += 1;
-      // }
     }
+
   }
 
   // cout << "number of white points " << num_whitePoints << "\n" << endl;
 
-  if (num_whitePoints > 0 || num_redPoints > 0) {
+  if (num_whitePoints > 0 || num_redPoints > radius) {
     cout << "\nnumber of red points " << num_redPoints << endl;
+    cout << "number of white points " << num_whitePoints << endl;
     return true;
   }
 
