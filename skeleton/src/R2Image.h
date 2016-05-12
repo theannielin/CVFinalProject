@@ -117,7 +117,7 @@ struct line_equation {
   // magic frame -- final project operations
   void magicFeature();
   bool clusters(coordinates center, R2Pixel color);
-  frame findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]);
+  frame findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_frame[4]);
   void magicReplaceFrameContent(R2Image * nextImage, frame shifted_frame);
   void magicExtractFrozen(void);
 

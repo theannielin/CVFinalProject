@@ -241,7 +241,7 @@ main(int argc, char **argv)
       delete other_image;
     }
     else if (!strcmp(*argv, "-magic")) {
-      CheckOption(*argv, argc, 2);
+CheckOption(*argv, argc, 2);
       int numImages = atof(argv[1]);
       std::string filename(input_image_name);
       std::size_t file_last_slash = filename.find_last_of("/");
@@ -258,6 +258,7 @@ main(int argc, char **argv)
       for(int i = 0; i < 4; i++){
         prev_frame[i] = image->frame_corners[i];
       }
+      std::string prev_filename = filename;
 
       // For all the other images, replace the frame with the extracted image
       for (int i = 1; i < numImages; i++) {
@@ -266,8 +267,8 @@ main(int argc, char **argv)
         unsigned int number_of_digits = 0;
         int n = i;
         do {
-             ++number_of_digits; 
-             n /= 10;
+           ++number_of_digits; 
+           n /= 10;
         } while (n);
         for (int j = 7 - number_of_digits; j > 0; j--) {
           filename.append("0");
@@ -275,14 +276,20 @@ main(int argc, char **argv)
         }
         filename.append(std::to_string(i)).append(".jpg");
         outname.append(std::to_string(i)).append(".jpg");
+        R2Image *prev_image = new R2Image(prev_filename.c_str());
         R2Image *next_image = new R2Image(filename.c_str());
 
         // Find the shifted frame and use those coordinated to replace frame image
-        R2Image::frame shifted_frame = image->findShiftedFrame(next_image, prev_frame);
+        R2Image::frame shifted_frame = image->findShiftedFrame(prev_image, next_image, prev_frame);
+        for(int i = 0; i < 4; i++){
+          prev_frame[i] = shifted_frame.coordinates[i];
+        }
         image->magicReplaceFrameContent(next_image, shifted_frame);
-
         next_image->Write(outname.c_str());
+
+        prev_filename = filename;
         delete next_image;
+        delete prev_image;
       }
     }
     else {
