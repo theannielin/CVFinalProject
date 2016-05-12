@@ -1170,26 +1170,58 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
 }
 
 R2Image::frame R2Image::
-findShiftedFrame(R2Image * nextImage, coordinates prev_frame[4]){
+findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_frame[4]){
   // Will run a local search using the previous frame coordinated to find new shifted frame
-  // TODO Annie do it lol
   frame new_frame;
 
+  // Search area size should be reasonable
+  int searchWidth = width/10;
+  int searchHeight = height/10;
+  const int offset = 13;
+  // For each point run a local search with SSD
+  for(int a = 0; a < 4; a++){
+    coordinates center;
+    coordinates prevCoord = prev_frame[a];
+    int minX = prevCoord.x;
+    int minY = prevCoord.y;
+    double minSum = 999999.0;
 
-  prev_frame[0].x = 464; //setting upper left point.
-  prev_frame[0].y = 222;
-  prev_frame[1].x = 249; //setting upper right point.
-  prev_frame[1].y = 200;
-  prev_frame[2].x = 259; //setting lower right point.
-  prev_frame[2].y = 47;
-  prev_frame[3].x = 473; //setting lower left point.
-  prev_frame[3].y = 55;
+    int prev_x = prevCoord.x;
+    int prev_y = prevCoord.y;
+    int cur_x = prevCoord.x;
+    int cur_y = prevCoord.y;
 
-
-  for(int i = 0; i < 4; i++){
-    new_frame.coordinates[i] = prev_frame[i];
-    // printf("COORDS (%d, %d)\n", new_frame.coordinates[i].x, new_frame.coordinates[i].y);
+    for (int x = prevCoord.x - searchWidth; x < prevCoord.x + searchWidth; x++) {
+      for (int y = prevCoord.y - searchHeight; y < prevCoord.y + searchHeight; y++) {
+        double sum = 0.0;
+        for (int i = -offset/2; i < offset/2; i++) {
+          for (int j = -offset/2; j < offset/2; j++) {
+            // prev_x = prevCoord.x + i;
+            // prev_y = prevCoord.y + j;
+            cur_x = x + i;
+            cur_y = y + j;
+            // Check for bounds
+            if (prev_x < 0 || prev_x > width) {prev_x = prevCoord.x;}
+            if (prev_y < 0 || prev_y > height) {prev_y = prevCoord.y;}
+            if (cur_x < 0 || cur_x > width) {cur_x = prevCoord.x;}
+            if (cur_y < 0 || cur_y > height) {cur_y = prevCoord.y;}
+            R2Pixel diff = prevImage->Pixel(prev_x, prev_y) - nextImage->Pixel(cur_x, cur_y);
+            sum += diff.Red()*diff.Red() + diff.Green()*diff.Green() + diff.Blue()*diff.Blue();
+          }
+        }
+        if (sum < minSum) {
+          minX = cur_x;
+          minY = cur_y;
+          minSum = sum;
+        }
+      }
+    }
+    // Store new point here
+    center.x = minX;
+    center.y = minY;
+    new_frame.coordinates[a] = center;
   }
+
   return new_frame;
 }
 
