@@ -1242,12 +1242,12 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
 R2Image::frame R2Image::
 findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_frame[4]){
   // Will run a local search using the previous frame coordinated to find new shifted frame
-  frame new_frame;
+frame new_frame;
 
   // Search area size should be reasonable
-  int searchWidth = width/10;
-  int searchHeight = height/10;
-  const int offset = 13;
+  int searchWidth = width/5;
+  int searchHeight = height/5;
+  const int offset = 10;
   // For each point run a local search with SSD
   for(int a = 0; a < 4; a++){
     coordinates center;
@@ -1266,22 +1266,18 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
         double sum = 0.0;
         for (int i = -offset/2; i < offset/2; i++) {
           for (int j = -offset/2; j < offset/2; j++) {
-            // prev_x = prevCoord.x + i;
-            // prev_y = prevCoord.y + j;
-            // cur_x = x + i;
-            // cur_y = y + j;
             // Check for bounds
-            if (prev_x < 0 || prev_x > width) {prev_x = prevCoord.x;}
-            if (prev_y < 0 || prev_y > height) {prev_y = prevCoord.y;}
-            if (cur_x < 0 || cur_x > width) {cur_x = prevCoord.x;}
-            if (cur_y < 0 || cur_y > height) {cur_y = prevCoord.y;}
+            if (prevCoord.x + i > 0 && prevCoord.x + i < width) {prev_x = prevCoord.x + i;}
+            if (prevCoord.y + j > 0 && prevCoord.y + j < height) {prev_y = prevCoord.y + j;}
+            if (x + i > 0 && x + i < width) {cur_x = x + i;}
+            if (y + j > 0 && y + j < height) {cur_y = y + j;}
             R2Pixel diff = prevImage->Pixel(prev_x, prev_y) - nextImage->Pixel(cur_x, cur_y);
             sum += diff.Red()*diff.Red() + diff.Green()*diff.Green() + diff.Blue()*diff.Blue();
           }
         }
         if (sum < minSum) {
-          minX = cur_x;
-          minY = cur_y;
+          minX = x;
+          minY = y;
           minSum = sum;
         }
       }
