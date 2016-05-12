@@ -1198,8 +1198,8 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
           for (int j = -offset/2; j < offset/2; j++) {
             // prev_x = prevCoord.x + i;
             // prev_y = prevCoord.y + j;
-            cur_x = x + i;
-            cur_y = y + j;
+            // cur_x = x + i;
+            // cur_y = y + j;
             // Check for bounds
             if (prev_x < 0 || prev_x > width) {prev_x = prevCoord.x;}
             if (prev_y < 0 || prev_y > height) {prev_y = prevCoord.y;}
