@@ -11,8 +11,6 @@
 #include <iostream>
 #include <time.h>
 
-using namespace std;
-
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -1095,6 +1093,10 @@ void R2Image::magicFeature(void) {
       num_foundPoints += 1;
       cout << "Feature point " << i << endl;
       cout << "Coordinates " << temp.x << " " << temp.y << endl;
+
+      this->redTracker.push_back(topValues[i]);
+
+      // color found feature points
       for (int j = -5; j < 6; j++) {
         for(int z = -5; z < 6; z++){
           Pixel(temp.x + j, temp.y + z) = BLUE;
@@ -1123,7 +1125,8 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
   // TODO check if px surrounding feature points are similar to input color
   // TODO extract center feature point of tracker
   // Searches for red tracker and finds all 5 feature points of tracker for now
-
+  // TODO figure out how to find black tracker
+  // have vectors for points associated with certain trackers?
 
   int num_redPoints = 0;
   int num_whitePoints = 0;
@@ -1131,16 +1134,23 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
   for (int i = -1 * radius; i < radius + 1; i++) {
     for (int j = -1 * radius; j < radius + 1; j++) {
 
+      // make sure search doesn't fall of the edge of the image
       if (i + center.x < 0 || i + center.x > width || j + center.y < 0 || j + center.y > height) {
-        cout << "falls off edge " << endl;
-        cout << "pixel " << i+center.x << " " << j+center.y << endl;
         continue;
       }
+
       // compare difference between "dominant" value and the other two; check if within threshold
       // for now just comparing red values
       if (Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold 
         && Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
         num_redPoints += 1;
+      }
+
+      // looking for white image
+      if (1 - Pixel(i + center.x, j).Red() <= threshold &&
+          1 - Pixel(i + center.x, j).Green() <= threshold &&
+          1 - Pixel(i + center.x, j).Blue() <= threshold) {
+        num_whitePoints += 1;
       }
 
       // if ((Pixel(i + center.x,j + center.y).Red() + Pixel(i + center.x,j + center.y).Blue() + Pixel(i + center.x,j + center.y).Green()) / 3 >= 1 - threshold) {
