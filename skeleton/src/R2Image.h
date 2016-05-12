@@ -130,16 +130,7 @@ struct line_equation {
   int WriteBMP(const char *filename) const;
   int WritePPM(const char *filename, int ascii = 0) const;
   int WriteJPEG(const char *filename) const;
-
-  //y = mx + b
-  //if vertical then the line is vertical and x = b;
-  //note: I called it line_equation b/c there's a method "line" in R2Image already.
-  struct line_equation {
-    bool vertical;
-    double m;
-    double b;
-  };
-
+  
   // Utility functions
   void Resize(int width, int height);
   R2Pixel Sample(double u, double v,  int sampling_method);
