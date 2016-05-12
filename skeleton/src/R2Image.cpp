@@ -1364,7 +1364,7 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   int rightmost = shifted_frame[0].x;
   int topmost = shifted_frame[0].y;
   int botmost = shifted_frame[0].y;
-  for(int i = 0; i < 4; i++){
+  for(int i = 1; i < 4; i++){
     if(shifted_frame[i].x < leftmost){
       leftmost = shifted_frame[i].x;
     }
@@ -1423,7 +1423,7 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
       }
       if(in_frame){
         //okay in here it's all about inverse warping.
-        original_pix_pos = matrixMult(i,j, H);
+        original_pix_pos = matrixMult(i, j, H);
         //fprintf(stdout, "width and height of original: %d    %d \n", width, height);
         //fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
         nextImage->Pixel(i, j) = this->Pixel(original_pix_pos.x, original_pix_pos.y);
