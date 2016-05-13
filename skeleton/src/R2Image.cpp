@@ -603,9 +603,9 @@ double** hMatrixCalculation(translation translation[4]) {
       int x_a = translation[i-1].xOriginal;
       int y_a = translation[i-1].yOriginal;
       int w_a = 1;
-      int x_b = translation[i-1].xTranslated;
-      int y_b = translation[i-1].yTranslated;
-      int w_b = 1;
+      int x_b = translation[i-1].xTranslated;  //x'
+      int y_b = translation[i-1].yTranslated;  //y'
+      int w_b = 1;                             //w'
 
       // [0 0 0 -w_b*x_a -w_b*y_a -w_b*w_a y_b*x_a y_b*y_a y_b*w_a]
       matrixP[i*2-1][1] = 0; // 1
@@ -620,7 +620,7 @@ double** hMatrixCalculation(translation translation[4]) {
       // [w_b*x_a w_b*y_a w_b*w_a 0 0 0 -x_b*x_a -x_b*y_a -x_b*w_a]
       matrixP[i*2][1] = w_b*x_a; // 1
       matrixP[i*2][2] = w_b*y_a; // 2
-      matrixP[i*2][3] = w_b*w_a; // 3
+      matrixP[i*2][3] = 1;//w_b*w_a; // 3
       matrixP[i*2][4] = 0; // 4
       matrixP[i*2][5] = 0; // 5
       matrixP[i*2][6] = 0; // 6
@@ -635,9 +635,10 @@ double** hMatrixCalculation(translation translation[4]) {
   svdcmp(matrixP, 8, 9, singularValues, nullSpaceMatrix);
   // Find the smallest singular value:
   int smallestIndex = 1;
+
   for(int i=2;i<10;i++) if(singularValues[i]<singularValues[smallestIndex]) smallestIndex=i;
   // printf("SINGULAR VALUES: ");
-  // for(int i=1;i<10;i++) printf(" %f ", singularValues[i]);
+  //   for(int i=1;i<10;i++) printf(" %f ", singularValues[i]);
   // printf("\n");
     
   // Build the matrix H_norm from the resulting 9 numbers
@@ -1233,10 +1234,13 @@ magicExtractFrozen(void)
   //for now, I'm just manually setting frame_corners to the top left quarter of the image.
   frame_corners[0].x = 464; //setting upper left point.
   frame_corners[0].y = 222;
+
   frame_corners[1].x = 249; //setting upper right point.
   frame_corners[1].y = 200;
+  
   frame_corners[2].x = 259; //setting lower right point.
   frame_corners[2].y = 47;
+  
   frame_corners[3].x = 473; //setting lower left point.
   frame_corners[3].y = 55;
   // TODO add a red cross in middle of image for now
@@ -1283,10 +1287,11 @@ R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
   y_prime_val += H[2][2] * y_val;
   y_prime_val += H[2][3];
 
-  z_prime_val  = H[3][1];
-  z_prime_val += H[3][2];
+  z_prime_val  = H[3][1] * x_val;
+  z_prime_val += H[3][2] * y_val;
   z_prime_val += H[3][3];
 
+//  fprintf(stdout, "z_prime_val %f for x: %d and y: %d  \n", z_prime_val, x_val, y_val);
   answer.x = x_prime_val / z_prime_val;
   answer.y = y_prime_val / z_prime_val;
   return answer;
@@ -1295,24 +1300,7 @@ R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
 void R2Image::
 magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
 {
-
-  /*R2Image::coordinates a;
-  a.x = 1;
-  a.y = 1;
-  R2Image::coordinates b;
-  b.x = 1;
-  b.y = 0;
-
-  R2Image::line_equation answer;
-  answer = computeLine(a,b);
-  fprintf(stdout, "is vertical? %d", answer.vertical);
-  fprintf(stdout, "y = %fx + %f", answer.m, answer.b);
-*/
-
-
-
-  double** H = dmatrix(1,3, 1, 3);
-  translation trans[4]; //this'll store the upper left, upper right,lower right, lower left
+  translation * trans = new translation[4]; //this'll store the upper left, upper right,lower right, lower left
   //translations in that order (also if you think of a more descriptive name than "trans" I'm all ears.)
   
 
@@ -1324,17 +1312,28 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
 
   coordinates shifted_frame[4];
   
-  shifted_frame[0].x = sh_frame.coordinates[0].x;
-  shifted_frame[0].y = sh_frame.coordinates[0].y;
 
-  shifted_frame[1].x = sh_frame.coordinates[1].x;
-  shifted_frame[1].y = sh_frame.coordinates[1].y;
+  // 464; //setting upper left point.
+  // 222;
+  // 249; //setting upper right point.
+  // 200;
+  // 259; //setting lower right point.
+  // 47;
+  // 473; //setting lower left point.
+  // 55;
 
-  shifted_frame[2].x = sh_frame.coordinates[2].x;
-  shifted_frame[2].y = sh_frame.coordinates[2].y;
+  shifted_frame[0].x = 464;// sh_frame.coordinates[0].x;
+  shifted_frame[0].y = 222;//sh_frame.coordinates[0].y;
+
+  shifted_frame[1].x = 249;// sh_frame.coordinates[1].x;
+  shifted_frame[1].y = 200;// sh_frame.coordinates[1].y;
+
+  shifted_frame[2].x = 259;// sh_frame.coordinates[2].x;
+  shifted_frame[2].y = 47;// sh_frame.coordinates[2].y;
   
-  shifted_frame[3].x = sh_frame.coordinates[3].x;
-  shifted_frame[3].y = sh_frame.coordinates[3].y;
+  shifted_frame[3].x = 473;// sh_frame.coordinates[3].x;
+  shifted_frame[3].y = 45;//sh_frame.coordinates[3].y;
+
 
 
  /*
@@ -1353,9 +1352,29 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
     trans[i].xOriginal = shifted_frame[i].x;
     trans[i].yOriginal = shifted_frame[i].y;
   }
-  H = hMatrixCalculation(trans);
+
+  // for(int i = 0; i< 4; i++){
+  //   fprintf(stdout, "trans[%d] original  x: %d y: %d \n      translated x: %d y %d \n", i,trans[i].xOriginal, trans[i].yOriginal, trans[i].xTranslated, trans[i].yTranslated);
+  // }
+
+  double** H = hMatrixCalculation(trans);
   //important to note: This H should map points from the nextImage to the original image
   //not the other way round. This is so we can inverse warp.
+
+  // for(int i = 1; i < 4; i++){
+  //   for(int j = 1; j< 4; j++){
+  //     fprintf(stdout, "here's H[%d][%d]: %f", i, j, H[i][j]);
+  //   }
+  //   fprintf(stdout, "\n");
+  // }
+  // //R2Image::coordinates original_pix_pos;
+  // for(int i = 0; i < 4; i++){
+  //   fprintf(stdout,"frame_corners[%d]   x: %d   y: %d \n", i, frame_corners[i].x, frame_corners[i].y);
+  //   fprintf(stdout,"shifted_frame[%d]   x: %d   y: %d \n", i, shifted_frame[i].x, shifted_frame[i].y);
+  //   original_pix_pos = matrixMult(shifted_frame[i].x, shifted_frame[i].y, H);
+  //   fprintf(stdout,"recomputed frame_corners[%d]   x: %d   y: %d \n\n", i, original_pix_pos.x, original_pix_pos.y);
+  // }
+
 
 
   //all bets are off for the orientation of the corners.
@@ -1400,7 +1419,6 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   }
 
   bool in_frame = 1;
-  R2Image::coordinates original_pix_pos;
   for(int i = leftmost; i < rightmost; i++){
     for(int j = botmost; j < topmost; j++){
       in_frame = 1; //reset in_frame to be 1.
@@ -1424,8 +1442,10 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
       if(in_frame){
         //okay in here it's all about inverse warping.
         original_pix_pos = matrixMult(i, j, H);
-        //fprintf(stdout, "width and height of original: %d    %d \n", width, height);
-        //fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
+        if(original_pix_pos.x > width || original_pix_pos.x < 0 || original_pix_pos.y > height || original_pix_pos.y < 0){
+          fprintf(stdout, "width and height of original: %d    %d \n", width, height);
+          fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
+        }
         nextImage->Pixel(i, j) = this->Pixel(original_pix_pos.x, original_pix_pos.y);
       }
     }
@@ -1436,15 +1456,18 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   // // TODO add a green cross in middle of image for now
   // // Replace the stuff inside the frame with frozen image 
   // printf("GOT TO FRAME CONTENT FUNCTION\n");
-  // R2Pixel red = R2Pixel(0.0, 1.0, 0.0, 0.0);
+  R2Pixel red = R2Pixel(1.0, 0, 0.0, 1.0);
+  R2Pixel blue = R2Pixel(0, 0, 1.0, 1.0);
   // int centerX = width/2;
   // int centerY = height/2;
-  // for (int i = 0; i < 5; i++) {
-  //   nextImage->Pixel(centerX - i, centerY) = red;
-  //   nextImage->Pixel(centerX, centerY  - i) = red;
-  //   nextImage->Pixel(centerX + i, centerY) = red;
-  //   nextImage->Pixel(centerX, centerY + i) = red;
-  // }
+  for (int i = 0; i < 4; i++) {
+    for(int j = -2; j < 3; j++){
+      for(int x = -2; x < 3; x++){
+        nextImage->Pixel(shifted_frame[i].x + j, shifted_frame[i].y + x) = red;
+        nextImage->Pixel(frame_corners[i].x + j, frame_corners[i].y + x) = blue;
+      }
+    }
+  }
 }
 
 
