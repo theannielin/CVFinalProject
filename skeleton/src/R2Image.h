@@ -95,6 +95,13 @@ class R2Image {
     int y;
   };
 
+  //here's a quick struct to help with the inverse warping
+  //(changing coordinates to have doubles broke something so that's a nono.)
+  struct d_coordinates {
+    double x;
+    double y;
+  };
+
   struct point {
     int x;
     int y;

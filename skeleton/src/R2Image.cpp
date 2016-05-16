@@ -10,6 +10,7 @@
 #include "svd.h"
 #include <iostream>
 #include <time.h>
+#include <math.h> //this is for ceil() and floor()
 
 
 
@@ -1176,9 +1177,9 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
   frame new_frame;
 
   // Search area size should be reasonable
-  int searchWidth = width/10;
-  int searchHeight = height/10;
-  const int offset = 13;
+  int searchWidth = width/5;
+  int searchHeight = height/5;
+  const int offset = 10;
   // For each point run a local search with SSD
   for(int a = 0; a < 4; a++){
     coordinates center;
@@ -1197,22 +1198,18 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
         double sum = 0.0;
         for (int i = -offset/2; i < offset/2; i++) {
           for (int j = -offset/2; j < offset/2; j++) {
-            // prev_x = prevCoord.x + i;
-            // prev_y = prevCoord.y + j;
-            // cur_x = x + i;
-            // cur_y = y + j;
             // Check for bounds
-            if (prev_x < 0 || prev_x > width) {prev_x = prevCoord.x;}
-            if (prev_y < 0 || prev_y > height) {prev_y = prevCoord.y;}
-            if (cur_x < 0 || cur_x > width) {cur_x = prevCoord.x;}
-            if (cur_y < 0 || cur_y > height) {cur_y = prevCoord.y;}
+            if (prevCoord.x + i > 0 && prevCoord.x + i < width) {prev_x = prevCoord.x + i;}
+            if (prevCoord.y + j > 0 && prevCoord.y + j < height) {prev_y = prevCoord.y + j;}
+            if (x + i > 0 && x + i < width) {cur_x = x + i;}
+            if (y + j > 0 && y + j < height) {cur_y = y + j;}
             R2Pixel diff = prevImage->Pixel(prev_x, prev_y) - nextImage->Pixel(cur_x, cur_y);
             sum += diff.Red()*diff.Red() + diff.Green()*diff.Green() + diff.Blue()*diff.Blue();
           }
         }
         if (sum < minSum) {
-          minX = cur_x;
-          minY = cur_y;
+          minX = x;
+          minY = y;
           minSum = sum;
         }
       }
@@ -1273,8 +1270,8 @@ R2Image::line_equation computeLine(R2Image::coordinates a, R2Image::coordinates 
   return answer;
 }
 
-R2Image::coordinates matrixMult(int x_val, int y_val, double** H){
-  R2Image::coordinates answer = {};
+R2Image::d_coordinates matrixMult(double x_val, double y_val, double** H){
+  R2Image::d_coordinates answer = {};
   double x_prime_val;
   double y_prime_val;
   double z_prime_val;
@@ -1322,19 +1319,17 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   // 473; //setting lower left point.
   // 55;
 
-  shifted_frame[0].x = 464;// sh_frame.coordinates[0].x;
-  shifted_frame[0].y = 222;//sh_frame.coordinates[0].y;
+  shifted_frame[0].x = sh_frame.coordinates[0].x;
+  shifted_frame[0].y = sh_frame.coordinates[0].y;
 
-  shifted_frame[1].x = 249;// sh_frame.coordinates[1].x;
-  shifted_frame[1].y = 200;// sh_frame.coordinates[1].y;
+  shifted_frame[1].x = sh_frame.coordinates[1].x;
+  shifted_frame[1].y = sh_frame.coordinates[1].y;
 
-  shifted_frame[2].x = 259;// sh_frame.coordinates[2].x;
-  shifted_frame[2].y = 47;// sh_frame.coordinates[2].y;
+  shifted_frame[2].x = sh_frame.coordinates[2].x;
+  shifted_frame[2].y = sh_frame.coordinates[2].y;
   
-  shifted_frame[3].x = 473;// sh_frame.coordinates[3].x;
-  shifted_frame[3].y = 45;//sh_frame.coordinates[3].y;
-
-
+  shifted_frame[3].x = sh_frame.coordinates[3].x;
+  shifted_frame[3].y = sh_frame.coordinates[3].y;
 
  /*
   0-------1
@@ -1360,21 +1355,6 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   double** H = hMatrixCalculation(trans);
   //important to note: This H should map points from the nextImage to the original image
   //not the other way round. This is so we can inverse warp.
-
-  // for(int i = 1; i < 4; i++){
-  //   for(int j = 1; j< 4; j++){
-  //     fprintf(stdout, "here's H[%d][%d]: %f", i, j, H[i][j]);
-  //   }
-  //   fprintf(stdout, "\n");
-  // }
-  // //R2Image::coordinates original_pix_pos;
-  // for(int i = 0; i < 4; i++){
-  //   fprintf(stdout,"frame_corners[%d]   x: %d   y: %d \n", i, frame_corners[i].x, frame_corners[i].y);
-  //   fprintf(stdout,"shifted_frame[%d]   x: %d   y: %d \n", i, shifted_frame[i].x, shifted_frame[i].y);
-  //   original_pix_pos = matrixMult(shifted_frame[i].x, shifted_frame[i].y, H);
-  //   fprintf(stdout,"recomputed frame_corners[%d]   x: %d   y: %d \n\n", i, original_pix_pos.x, original_pix_pos.y);
-  // }
-
 
 
   //all bets are off for the orientation of the corners.
@@ -1418,6 +1398,11 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
     }
   }
 
+  R2Image::d_coordinates original_pix_pos;
+  R2Pixel temp(0,0,0,1);
+  double weight = 0;
+  double total_weight = 0;
+
   bool in_frame = 1;
   for(int i = leftmost; i < rightmost; i++){
     for(int j = botmost; j < topmost; j++){
@@ -1442,32 +1427,69 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
       if(in_frame){
         //okay in here it's all about inverse warping.
         original_pix_pos = matrixMult(i, j, H);
-        if(original_pix_pos.x > width || original_pix_pos.x < 0 || original_pix_pos.y > height || original_pix_pos.y < 0){
-          fprintf(stdout, "width and height of original: %d    %d \n", width, height);
-          fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
+        // if(original_pix_pos.x > width || original_pix_pos.x < 0 || original_pix_pos.y > height || original_pix_pos.y < 0){
+        //   fprintf(stdout, "width and height of original: %d    %d \n", width, height);
+        //   fprintf(stdout, "calculated position x and y: %d %d  \n", original_pix_pos.x, original_pix_pos.y);
+        // }
+
+        /*
+        (floor, ceil)_____________(ceil, ceil)
+              |                         |
+              |             .(x,y)      |
+              |                         |
+        (floor, floor)____________(ceil, floor)
+
+
+        */
+        total_weight = 0;
+        temp.Reset(0,0,0,0);
+
+        //the weight for (ceil_x, ceil_y) is proportional to how far (x,y) is away from (floor, floor)
+        weight = original_pix_pos.x - floor(original_pix_pos.x) + original_pix_pos.y - floor(original_pix_pos.y);
+        temp = weight * this->Pixel(ceil(original_pix_pos.x), ceil(original_pix_pos.y));
+        total_weight += weight;
+
+        //the weight for (floor_x, floor_y) is proportional to how far (x,y) is away from (ceil, ceil)
+        weight = ceil(original_pix_pos.x) - original_pix_pos.x + ceil(original_pix_pos.y) - original_pix_pos.y;
+        temp += weight * this->Pixel(floor(original_pix_pos.x), floor(original_pix_pos.y));
+        total_weight += weight;
+
+        //the weight for (ceil_x, floor_y) is proportional to how far (x,y) is away from (floor, ceil)
+        weight = original_pix_pos.x - floor(original_pix_pos.x) + ceil(original_pix_pos.y) - original_pix_pos.y;
+        temp += weight * this->Pixel(ceil(original_pix_pos.x), floor(original_pix_pos.y));
+        total_weight += weight;
+
+        //the weight for (floor_x, ceil_y) is proportional to how far (x,y) is away from (ceil, floor)
+        weight = ceil(original_pix_pos.x) - original_pix_pos.x + original_pix_pos.y - floor(original_pix_pos.y);
+        temp += weight * this->Pixel(floor(original_pix_pos.x), ceil(original_pix_pos.y));
+        total_weight += weight;
+
+        //if the coordinates in original_pix_pos are whole numbers then we run the risk of dividing by zero
+        if(total_weight != 0){ //and we never want to divide by zero.
+          nextImage->Pixel(i, j) = temp/total_weight; 
+        }else{
+          nextImage->Pixel(i, j) = this->Pixel(original_pix_pos.x, original_pix_pos.y);
         }
-        nextImage->Pixel(i, j) = this->Pixel(original_pix_pos.x, original_pix_pos.y);
       }
     }
   }
-
 
 
   // // TODO add a green cross in middle of image for now
   // // Replace the stuff inside the frame with frozen image 
   // printf("GOT TO FRAME CONTENT FUNCTION\n");
-  R2Pixel red = R2Pixel(1.0, 0, 0.0, 1.0);
-  R2Pixel blue = R2Pixel(0, 0, 1.0, 1.0);
+  // R2Pixel red = R2Pixel(1.0, 0, 0.0, 1.0);
+  // R2Pixel blue = R2Pixel(0, 0, 1.0, 1.0);
   // int centerX = width/2;
   // int centerY = height/2;
-  for (int i = 0; i < 4; i++) {
-    for(int j = -2; j < 3; j++){
-      for(int x = -2; x < 3; x++){
-        nextImage->Pixel(shifted_frame[i].x + j, shifted_frame[i].y + x) = red;
-        nextImage->Pixel(frame_corners[i].x + j, frame_corners[i].y + x) = blue;
-      }
-    }
-  }
+  // for (int i = 0; i < 4; i++) {
+  //   for(int j = -2; j < 3; j++){
+  //     for(int x = -2; x < 3; x++){
+  //       nextImage->Pixel(shifted_frame[i].x + j, shifted_frame[i].y + x) = red;
+  //       nextImage->Pixel(frame_corners[i].x + j, frame_corners[i].y + x) = blue;
+  //     }
+  //   }
+  // }
 }
 
 
