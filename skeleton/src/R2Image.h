@@ -121,11 +121,12 @@ struct line_equation {
   double b;
 };
 
-struct tracker_points {
-  int x;
-  int y;
-  int numberOfPoints;
-};
+// TODO DELETE THIS IF NEVER USED
+// struct tracker_points {
+//   int x;
+//   int y;
+//   int numberOfPoints;
+// };
 
   // magic frame -- final project operations
   void magicFeature();

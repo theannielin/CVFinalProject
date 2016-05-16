@@ -987,6 +987,8 @@ R2Image freezeFrame;
 
 // constants for identifying trackers
 double threshold = 0.3; // color -- need to tighten this
+double blueThreshold = 0.1;
+double greenThreshold = 0.04;
 double whiteThreshold = 0.5;
 int radius = 3; // pixels to search around the center -- potentially widen this
 
@@ -1128,7 +1130,8 @@ void R2Image::magicFeature(void) {
 
   }
 
-  for (int index = 0; index < redTracker.size(); index++) {
+  // color output in green
+  /*for (int index = 0; index < redTracker.size(); index++) {
     for (int j = -3; j < 4; j++) {
       for(int z = -3; z < 4; z++){
         if (j + redTracker[index].x < 0 || j + redTracker[index].x > width || z + redTracker[index].y < 0 || z + redTracker[index].y > height) {
@@ -1173,7 +1176,7 @@ void R2Image::magicFeature(void) {
       }
     }
 
-  }
+  } */
  
 
   // iterate through "tracker" vectors and find the ones surrounded by white clusters
@@ -1200,26 +1203,73 @@ void R2Image::magicFeature(void) {
 
 
   cout << "found " << num_foundPoints << " points" << endl;
+  // TODO FIND BETTER WAY TO LOCATE ACTUAL CORNERS
+  // FOR NOW AVERAGE OUT NUMBERS AND PRINT RESULT
 
+  double redX = 0;
+  double redY = 0;
   for (int i = 0; i < redTracker.size(); i++) {
-    cout << "red point " << redTracker[i].x << " " << redTracker[i].y << endl;
+    redX += redTracker[i].x;
+    redY += redTracker[i].y;
   }
+
+  redX /= redTracker.size();
+  redY /= redTracker.size();
+
+  //double to int: static_cast<int>
+  this->frame_corners[2].x = static_cast<int> (redX);
+  this->frame_corners[2].y = static_cast<int> (redY);
+
+  cout << "average coordinates for red points " << redX << " " << redY << endl;
   cout << "redtracker size " << redTracker.size() << endl;
 
+  double greenX = 0;
+  double greenY = 0;
   for (int i = 0; i < greenTracker.size(); i++) {
-    cout << "green point " << greenTracker[i].x << " " << greenTracker[i].y << endl;
-  }
+      greenX += greenTracker[i].x;
+      greenY += greenTracker[i].y;
+    }
+
+  greenX /= greenTracker.size();
+  greenY /= greenTracker.size();
+
+  this->frame_corners[3].x = static_cast<int> (greenX);
+  this->frame_corners[3].y = static_cast<int> (greenY);
+
+  cout << "average coordinates for green points " << greenX << " " << greenY << endl;
   cout << "green tracker size " << greenTracker.size() << endl;
   
+
+  double blueX = 0;
+  double blueY = 0;
   for (int i = 0; i < blueTracker.size(); i++) {
-    cout << "blue point " << blueTracker[i].x << " " << blueTracker[i].y << endl;
-  }
+      blueX += blueTracker[i].x;
+      blueY += blueTracker[i].y;
+    }
+
+  blueX /= blueTracker.size();
+  blueY /= blueTracker.size();
+
+  this->frame_corners[0].x = static_cast<int> (blueX);
+  this->frame_corners[0].y = static_cast<int> (blueY);
+
+  cout << "average coordinates for blue points " << blueX << " " << blueY << endl;
   cout << "blue tracker size " << blueTracker.size() << endl;
   
+
+  // TODO implement white tracker; for now whiteTracker vector should always be empty
   for (int i = 0; i < whiteTracker.size(); i++) {
     cout << "white point " << whiteTracker[i].x << " " << whiteTracker[i].y << endl;
   }
   cout << "white tracker size " << whiteTracker.size() << endl;
+
+  // TODO save corner point values
+  // clear vectors before moving on
+
+  redTracker.clear();
+  greenTracker.clear();
+  blueTracker.clear();
+  whiteTracker.clear();
 
 }
 
@@ -1275,19 +1325,32 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      if (blue &&
-        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Red() >= threshold &&
-        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
-        
-        num_bluePoints += 1;
+      // potential threshold measure: pixel.red/((pixel.green * pixel.blue) + .001)
+
+      /* pb with following implementation -- picks up false positives in yellow because doesn't take blue vals into account */
+      // if (green &&
+      //   Pixel(i + center.x,j + center.y).Green() - (Pixel(i + center.x,j + center.y).Blue() + Pixel(i + center.x,j + center.y).Red()) / 2 >= 0.1) {
+
+      if (green &&
+        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Blue() >= greenThreshold &&
+        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Red() >= greenThreshold) {
+      
+      /* wasn't picking up green points; somehow was tracking black points instead */
+      // if (green && (Pixel(i + center.x, j + center.y).Green() / (Pixel(i + center.x, j + center.y).Blue() * Pixel(i + center.x, j + center.y).Red() + 0.001)) >= 0.5) { 
+
+        // print out pixel color
+        cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " <<
+         Pixel(i + center.x, j + center.y).Green() << " " 
+         << Pixel(i + center.x, j + center.y).Blue() << endl;
+        num_greenPoints += 1;
         continue;
       }
 
-      if (green &&
-        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Blue() >= threshold &&
-        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Red() >= threshold) {
+      if (blue &&
+        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Red() >= blueThreshold &&
+        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Green() >= blueThreshold) {
         
-        num_greenPoints += 1;
+        num_bluePoints += 1;
         continue;
       }
 
@@ -1375,17 +1438,20 @@ magicExtractFrozen(void)
 {
 
   //for now, I'm just manually setting frame_corners to the top left quarter of the image.
-  frame_corners[0].x = 464; //setting upper left point.
-  frame_corners[0].y = 222;
+  // frame_corners[0].x = 464; //setting upper left point.
+  // frame_corners[0].y = 222;
 
-  frame_corners[1].x = 249; //setting upper right point.
+  magicFeature();
+
+  frame_corners[1].x = 249; //setting upper right point. // TODO black tracker is hard-coded for now
   frame_corners[1].y = 200;
   
-  frame_corners[2].x = 259; //setting lower right point.
-  frame_corners[2].y = 47;
+  // frame_corners[2].x = 259; //setting lower right point.
+  // frame_corners[2].y = 47;
   
-  frame_corners[3].x = 473; //setting lower left point.
-  frame_corners[3].y = 55;
+  // frame_corners[3].x = 473; //setting lower left point.
+  // frame_corners[3].y = 55;
+
   // TODO add a red cross in middle of image for now
   // TODO Detect and store the "frame" information
   // TODO set freezeFrame to dimensions of the frame according to frame_corners
@@ -1495,7 +1561,8 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   }
 
   // for(int i = 0; i< 4; i++){
-  //   fprintf(stdout, "trans[%d] original  x: %d y: %d \n      translated x: %d y %d \n", i,trans[i].xOriginal, trans[i].yOriginal, trans[i].xTranslated, trans[i].yTranslated);
+  //   fprintf(stdout, "trans[%d] original  x: %d y: %d \n      
+        //translated x: %d y %d \n", i,trans[i].xOriginal, trans[i].yOriginal, trans[i].xTranslated, trans[i].yTranslated);
   // }
 
   double** H = hMatrixCalculation(trans);
