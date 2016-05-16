@@ -195,7 +195,8 @@ svdTest(void)
   for(int i=2;i<7;i++) if(singularValues[i]<singularValues[smallestIndex]) smallestIndex=i;
 
   // solution is the nullspace of the matrix, which is the column in V corresponding to the smallest singular value (which should be 0)
-  printf("Conic coefficients: %f, %f, %f, %f, %f, %f\n",nullspaceMatrix[1][smallestIndex],nullspaceMatrix[2][smallestIndex],nullspaceMatrix[3][smallestIndex],nullspaceMatrix[4][smallestIndex],nullspaceMatrix[5][smallestIndex],nullspaceMatrix[6][smallestIndex]);
+  printf("Conic coefficients: %f, %f, %f, %f, %f, %f\n",nullspaceMatrix[1][smallestIndex],nullspaceMatrix[2][smallestIndex],nullspaceMatrix[3][smallestIndex],
+    nullspaceMatrix[4][smallestIndex],nullspaceMatrix[5][smallestIndex],nullspaceMatrix[6][smallestIndex]);
 
   // make sure the solution is correct:
   printf("Equation #1 result: %f\n",  p1[0]*p1[0]*nullspaceMatrix[1][smallestIndex] + 
@@ -973,9 +974,9 @@ blendOtherImageHomography(R2Image * otherImage)
 
 
 
-///////////////////////////////
+/////////////////////////
 /* FRAME FINAL PROJECT */
-///////////////////////////////
+/////////////////////////
 
 
 
@@ -998,8 +999,10 @@ R2Pixel blue = R2Pixel(0,0,1,1);;
 R2Pixel black = R2Pixel(0,0,0,1);
 R2Pixel white = R2Pixel(1,1,1,1);
 
-// test
+// test TODO TRY TO MIGRATE THIS
 vector<R2Image::coordinates> redTracker;
+vector<R2Image::coordinates> greenTracker;
+vector<R2Image::coordinates> blueTracker;
 vector<R2Image::coordinates> whiteTracker;
 
 
@@ -1102,68 +1105,119 @@ void R2Image::magicFeature(void) {
     // only looking for red tracker for now
     if (clusters(temp, red)) {
       num_foundPoints += 1;
-      cout << "Feature point " << i << endl;
-      cout << "Coordinates " << temp.x << " " << temp.y << endl;
-      cout << "tracker vector size " << redTracker.size() << endl;
       redTracker.push_back(temp);
-      cout << "pushes back point" << endl;
-
-      // color found feature points
-      // for (int j = -3; j < 4; j++) {
-      //   for(int z = -3; z < 4; z++){
-      //     if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
-      //       continue;
-      //     }
-      //     Pixel(temp.x + j, temp.y + z) = blue;
-      //   }
-      // }
-
+      cout << "red tracker vector size " << redTracker.size() << endl;
+      continue;
     }
 
-    // color the rest of the pixels in a different color
-    // else {
-    //   for (int j = -3; j < 4; j++) {
-    //     for(int z = -3; z < 4; z++){
-    //       if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
-    //         continue;
-    //       }
-    //       Pixel(temp.x + j, temp.y + z) = green;
-    //     }
-    //   }
-    // }
+    if (clusters(temp, green)) {
+      num_foundPoints += 1;
+      greenTracker.push_back(temp);
+      cout << "green tracker vector size " << greenTracker.size() << endl;
+      continue;
+    }
+
+    if (clusters(temp, blue)) {
+      num_foundPoints += 1;
+      blueTracker.push_back(temp);
+      cout << "blue tracker vector size " << blueTracker.size() << endl;
+      continue;
+    }
 
   }
+
+  for (int index = 0; index < redTracker.size(); index++) {
+    for (int j = -3; j < 4; j++) {
+      for(int z = -3; z < 4; z++){
+        if (j + redTracker[index].x < 0 || j + redTracker[index].x > width || z + redTracker[index].y < 0 || z + redTracker[index].y > height) {
+          continue;
+        }
+        Pixel(redTracker[index].x + j, redTracker[index].y + z) = green;
+      }
+    }
+  }
+
+  for (int index = 0; index < greenTracker.size(); index++) {
+    for (int j = -3; j < 4; j++) {
+      for(int z = -3; z < 4; z++){
+        if (j + greenTracker[index].x < 0 || j + greenTracker[index].x > width || z + greenTracker[index].y < 0 || z + greenTracker[index].y > height) {
+          continue;
+        }
+        Pixel(greenTracker[index].x + j, greenTracker[index].y + z) = green;
+      }
+    }
+
+  }
+
+  for (int index = 0; index < blueTracker.size(); index++) {
+    for (int j = -3; j < 4; j++) {
+      for(int z = -3; z < 4; z++){
+        if (j + blueTracker[index].x < 0 || j + blueTracker[index].x > width || z + blueTracker[index].y < 0 || z + blueTracker[index].y > height) {
+          continue;
+        }
+        Pixel(blueTracker[index].x + j, blueTracker[index].y + z) = green;
+      }
+    }
+
+  }
+
+  for (int index = 0; index < whiteTracker.size(); index++) {
+    for (int j = -3; j < 4; j++) {
+      for(int z = -3; z < 4; z++){
+        if (j + whiteTracker[index].x < 0 || j + whiteTracker[index].x > width || z + whiteTracker[index].y < 0 || z + whiteTracker[index].y > height) {
+          continue;
+        }
+        Pixel(whiteTracker[index].x + j, whiteTracker[index].y + z) = green;
+      }
+    }
+
+  }
+ 
 
   // iterate through "tracker" vectors and find the ones surrounded by white clusters
-  for (int index = 0; index < redTracker.size(); index++) {
+  // for (int index = 0; index < redTracker.size(); index++) {
 
-    temp.x = redTracker[index].x;
-    temp.y = redTracker[index].y;
+  //   temp.x = redTracker[index].x;
+  //   temp.y = redTracker[index].y;
 
-    if (clusters(temp, white)) {
-      cout << "Found white cluster at " << temp.x << " " << temp.y << endl;
-      whiteTracker.push_back(temp);
-      // color these points in green
-      for (int j = -3; j < 4; j++) {
-        for(int z = -3; z < 4; z++){
-          if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
-            continue;
-          }
-          Pixel(temp.x + j, temp.y + z) = green;
-        }
-      }
+  //   if (clusters(temp, white)) {
+  //     cout << "Found white cluster at " << temp.x << " " << temp.y << endl;
+  //     whiteTracker.push_back(temp);
+  //     // color these points in green
+  //     for (int j = -3; j < 4; j++) {
+  //       for(int z = -3; z < 4; z++){
+  //         if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
+  //           continue;
+  //         }
+  //         Pixel(temp.x + j, temp.y + z) = green;
+  //       }
+  //     }
 
-    }
-  }
+  //   }
+  // }
 
 
   cout << "found " << num_foundPoints << " points" << endl;
+
   for (int i = 0; i < redTracker.size(); i++) {
     cout << "red point " << redTracker[i].x << " " << redTracker[i].y << endl;
   }
+  cout << "redtracker size " << redTracker.size() << endl;
+
+  for (int i = 0; i < greenTracker.size(); i++) {
+    cout << "green point " << greenTracker[i].x << " " << greenTracker[i].y << endl;
+  }
+  cout << "green tracker size " << greenTracker.size() << endl;
+  
+  for (int i = 0; i < blueTracker.size(); i++) {
+    cout << "blue point " << blueTracker[i].x << " " << blueTracker[i].y << endl;
+  }
+  cout << "blue tracker size " << blueTracker.size() << endl;
+  
   for (int i = 0; i < whiteTracker.size(); i++) {
     cout << "white point " << whiteTracker[i].x << " " << whiteTracker[i].y << endl;
   }
+  cout << "white tracker size " << whiteTracker.size() << endl;
 
 }
 
@@ -1205,17 +1259,37 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      // looking for red clusters
+      // print out pixel color
+      // cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " <<
+      //  Pixel(i + center.x, j + center.y).Green() << " " 
+      //  << Pixel(i + center.x, j + center.y).Blue() << endl;
+
+      // look for red clusters
       if (red &&
         Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold &&
         Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
         
         num_redPoints += 1;
+        continue;
       }
 
-      cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " << Pixel(i + center.x, j + center.y).Green() << " " << Pixel(i + center.x, j + center.y).Blue() << endl;
+      if (blue &&
+        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Red() >= threshold &&
+        Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Green() >= threshold) {
+        
+        num_bluePoints += 1;
+        continue;
+      }
 
-      // looking for white clusters
+      if (green &&
+        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Blue() >= threshold &&
+        Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Red() >= threshold) {
+        
+        num_greenPoints += 1;
+        continue;
+      }
+
+      // look for white clusters
       if (white &&
           1 - Pixel(i + center.x, j + center.y).Red() <= whiteThreshold &&
           1 - Pixel(i + center.x, j + center.y).Green() <= whiteThreshold &&
@@ -1230,8 +1304,10 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
 
   // cout << "number of white points " << num_whitePoints << "\n" << endl;
 
-  if (num_whitePoints > 0 || num_redPoints > radius) {
+  if (num_whitePoints > 0 || num_redPoints > 0 || num_greenPoints > 0 || num_bluePoints > 0) {
     cout << "\nnumber of red points " << num_redPoints << endl;
+    cout << "number of green points " << num_greenPoints << endl;
+    cout << "number of blue points " << num_bluePoints << endl;
     cout << "number of white points " << num_whitePoints << endl;
     return true;
   }

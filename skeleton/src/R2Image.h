@@ -114,6 +114,12 @@ struct line_equation {
   double b;
 };
 
+struct tracker_points {
+  int x;
+  int y;
+  int numberOfPoints;
+};
+
   // magic frame -- final project operations
   void magicFeature();
   bool clusters(coordinates center, R2Pixel color);
