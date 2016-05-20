@@ -987,9 +987,8 @@ R2Image freezeFrame;
 
 // constants for identifying trackers
 double threshold = 0.3; // color -- need to tighten this
-double blueThreshold = 0.1;
+double blueThreshold = 0.2;
 double greenThreshold = 0.04;
-double whiteThreshold = 0.5;
 int radius = 3; // pixels to search around the center -- potentially widen this
 
 double sigma = 3.0;
@@ -1000,14 +999,15 @@ int minFeatureDistance = 10;
 R2Pixel red = R2Pixel(1,0,0,1);
 R2Pixel green = R2Pixel(0,1,0,1);
 R2Pixel blue = R2Pixel(0,0,1,1);;
-R2Pixel black = R2Pixel(0,0,0,1);
-R2Pixel white = R2Pixel(1,1,1,1);
 
-// test TODO TRY TO MIGRATE THIS
 vector<R2Image::coordinates> redTracker;
 vector<R2Image::coordinates> greenTracker;
 vector<R2Image::coordinates> blueTracker;
-vector<R2Image::coordinates> whiteTracker;
+
+struct compare {
+  bool operator() (const R2Image::coordinates &c1, const R2Image::coordinates &c2) { return (c1.y < c2.y); }
+} comparison;
+
 
 
 void R2Image::magicFeature(void) {
@@ -1065,11 +1065,7 @@ void R2Image::magicFeature(void) {
   // Sort the array according to values
   qsort(values, width * height, sizeof(point), compare);
   
-  // Find 150 features with very high corner score
-  cout << "FINDING FEATURES" << endl;
-  
   int featureCount = 0;
-  
   for (int idx = 0; featureCount < numFeaturePoints && idx < width*height; idx++) {
     point curPoint = values[idx];
     bool close = false;
@@ -1093,152 +1089,43 @@ void R2Image::magicFeature(void) {
     this->topValues[featureCount++] = curPoint;
   }
 
-  // output for now: blue square over each feature point
-  // TODO look for features of trackers and mark these with larger squares
-  // TODO save detected four corners in this->frame_corners array
 
   R2Image::coordinates temp = {};
-
-  // note: when only looking for feature points with red px, only found 1/5 corners of the tracker
 
   int num_foundPoints = 0;
   for (int i = 0; i < numFeaturePoints; i++) {
     temp.x = this->topValues[i].x;
     temp.y = this->topValues[i].y;
     
-    // only looking for red tracker for now
     if (clusters(temp, red)) {
       num_foundPoints += 1;
       redTracker.push_back(temp);
-      cout << "red tracker vector size " << redTracker.size() << endl;
       continue;
     }
 
     if (clusters(temp, green)) {
       num_foundPoints += 1;
       greenTracker.push_back(temp);
-      cout << "green tracker vector size " << greenTracker.size() << endl;
       continue;
     }
 
     if (clusters(temp, blue)) {
       num_foundPoints += 1;
       blueTracker.push_back(temp);
-      cout << "blue tracker vector size " << blueTracker.size() << endl;
+
       continue;
     }
 
   }
 
-  // color output in green
-  /*for (int index = 0; index < redTracker.size(); index++) {
-    for (int j = -3; j < 4; j++) {
-      for(int z = -3; z < 4; z++){
-        if (j + redTracker[index].x < 0 || j + redTracker[index].x > width || z + redTracker[index].y < 0 || z + redTracker[index].y > height) {
-          continue;
-        }
-        Pixel(redTracker[index].x + j, redTracker[index].y + z) = green;
-      }
+  sort(redTracker.begin(), redTracker.end(), comparison);
+
+  int last_big_jump = 1; //stores the biggest jump. between redTracker[last_big_jump] and redTracker[last_big_jump - 1]
+  for (int i = 2; i < redTracker.size(); i++) {
+    if((redTracker[last_big_jump].y - redTracker[last_big_jump - 1].y) < (redTracker[i].y - redTracker[i - 1].y)){
+      last_big_jump = i;
     }
   }
-
-  for (int index = 0; index < greenTracker.size(); index++) {
-    for (int j = -3; j < 4; j++) {
-      for(int z = -3; z < 4; z++){
-        if (j + greenTracker[index].x < 0 || j + greenTracker[index].x > width || z + greenTracker[index].y < 0 || z + greenTracker[index].y > height) {
-          continue;
-        }
-        Pixel(greenTracker[index].x + j, greenTracker[index].y + z) = green;
-      }
-    }
-
-  }
-
-  for (int index = 0; index < blueTracker.size(); index++) {
-    for (int j = -3; j < 4; j++) {
-      for(int z = -3; z < 4; z++){
-        if (j + blueTracker[index].x < 0 || j + blueTracker[index].x > width || z + blueTracker[index].y < 0 || z + blueTracker[index].y > height) {
-          continue;
-        }
-        Pixel(blueTracker[index].x + j, blueTracker[index].y + z) = green;
-      }
-    }
-
-  }
-
-  for (int index = 0; index < whiteTracker.size(); index++) {
-    for (int j = -3; j < 4; j++) {
-      for(int z = -3; z < 4; z++){
-        if (j + whiteTracker[index].x < 0 || j + whiteTracker[index].x > width || z + whiteTracker[index].y < 0 || z + whiteTracker[index].y > height) {
-          continue;
-        }
-        Pixel(whiteTracker[index].x + j, whiteTracker[index].y + z) = green;
-      }
-    }
-
-  } */
- 
-
-  // iterate through "tracker" vectors and find the ones surrounded by white clusters
-  // for (int index = 0; index < redTracker.size(); index++) {
-
-  //   temp.x = redTracker[index].x;
-  //   temp.y = redTracker[index].y;
-
-  //   if (clusters(temp, white)) {
-  //     cout << "Found white cluster at " << temp.x << " " << temp.y << endl;
-  //     whiteTracker.push_back(temp);
-  //     // color these points in green
-  //     for (int j = -3; j < 4; j++) {
-  //       for(int z = -3; z < 4; z++){
-  //         if (j + temp.x < 0 || j + temp.x > width || z + temp.y < 0 || z + temp.y > height) {
-  //           continue;
-  //         }
-  //         Pixel(temp.x + j, temp.y + z) = green;
-  //       }
-  //     }
-
-  //   }
-  // }
-
-
-  cout << "found " << num_foundPoints << " points" << endl;
-  // TODO FIND BETTER WAY TO LOCATE ACTUAL CORNERS
-  // FOR NOW AVERAGE OUT NUMBERS AND PRINT RESULT
-
-  double redX = 0;
-  double redY = 0;
-  for (int i = 0; i < redTracker.size(); i++) {
-    redX += redTracker[i].x;
-    redY += redTracker[i].y;
-  }
-
-  redX /= redTracker.size();
-  redY /= redTracker.size();
-
-  //double to int: static_cast<int>
-  this->frame_corners[2].x = static_cast<int> (redX);
-  this->frame_corners[2].y = static_cast<int> (redY);
-
-  cout << "average coordinates for red points " << redX << " " << redY << endl;
-  cout << "redtracker size " << redTracker.size() << endl;
-
-  double greenX = 0;
-  double greenY = 0;
-  for (int i = 0; i < greenTracker.size(); i++) {
-      greenX += greenTracker[i].x;
-      greenY += greenTracker[i].y;
-    }
-
-  greenX /= greenTracker.size();
-  greenY /= greenTracker.size();
-
-  this->frame_corners[3].x = static_cast<int> (greenX);
-  this->frame_corners[3].y = static_cast<int> (greenY);
-
-  cout << "average coordinates for green points " << greenX << " " << greenY << endl;
-  cout << "green tracker size " << greenTracker.size() << endl;
-  
 
   double blueX = 0;
   double blueY = 0;
@@ -1253,49 +1140,68 @@ void R2Image::magicFeature(void) {
   this->frame_corners[0].x = static_cast<int> (blueX);
   this->frame_corners[0].y = static_cast<int> (blueY);
 
-  cout << "average coordinates for blue points " << blueX << " " << blueY << endl;
-  cout << "blue tracker size " << blueTracker.size() << endl;
-  
+  /* sort values stored in red tracker by y-value;
+  look for the biggest jump; the points before the biggest jump are
+  in the lower red tracker (bottom right corner), frame corners index
+  value is 2 */
 
-  // TODO implement white tracker; for now whiteTracker vector should always be empty
-  for (int i = 0; i < whiteTracker.size(); i++) {
-    cout << "white point " << whiteTracker[i].x << " " << whiteTracker[i].y << endl;
+  double redX1 = 0;
+  double redY1 = 0;
+  for (int i = last_big_jump; i < redTracker.size(); i++) {
+    redX1 += redTracker[i].x;
+    redY1 += redTracker[i].y;
   }
-  cout << "white tracker size " << whiteTracker.size() << endl;
 
-  // TODO save corner point values
-  // clear vectors before moving on
+  redX1 /= (redTracker.size() - last_big_jump);
+  redY1 /= (redTracker.size() - last_big_jump);
+
+  this->frame_corners[1].x = static_cast<int> (redX1);
+  this->frame_corners[1].y = static_cast<int> (redY1);
+
+  double redX2 = 0;
+  double redY2 = 0;
+  for (int i = 0; i < last_big_jump; i++) {
+    redX2 += redTracker[i].x;
+    redY2 += redTracker[i].y;
+  }
+
+  redX2 /= last_big_jump;
+  redY2 /= last_big_jump;
+
+  this->frame_corners[2].x = static_cast<int> (redX2);
+  this->frame_corners[2].y = static_cast<int> (redY2);
+
+  double greenX = 0;
+  double greenY = 0;
+  for (int i = 0; i < greenTracker.size(); i++) {
+      greenX += greenTracker[i].x;
+      greenY += greenTracker[i].y;
+    }
+
+  greenX /= greenTracker.size();
+  greenY /= greenTracker.size();
+
+  this->frame_corners[3].x = static_cast<int> (greenX);
+  this->frame_corners[3].y = static_cast<int> (greenY);
 
   redTracker.clear();
   greenTracker.clear();
   blueTracker.clear();
-  whiteTracker.clear();
 
 }
 
 bool R2Image::clusters(coordinates center, R2Pixel color) {
-  // Tracker identification
-  // TODO check if px surrounding feature points are similar to input color
-  // TODO extract center feature point of tracker
-  // Searches for red tracker and finds all 5 feature points of tracker for now
-  // TODO figure out how to find black tracker
-  // have vectors for points associated with certain trackers?
 
   int num_redPoints = 0;
   int num_greenPoints = 0;
   int num_bluePoints = 0;
-  int num_whitePoints = 0;
 
   // detect search color
   bool red = false;
   bool green = false;
   bool blue = false;
-  bool white = false;
 
-  if (color.Red() == 1 && color.Green() == 1 && color.Blue() == 1) {
-    cout << "looking for white clusters" << endl;
-    white = true;
-  } else if (color.Red() > 0) {
+  if (color.Red() > 0) {
     red = true;
   } else if (color.Green() > 0) {
     green = true;
@@ -1311,11 +1217,6 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      // print out pixel color
-      // cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " <<
-      //  Pixel(i + center.x, j + center.y).Green() << " " 
-      //  << Pixel(i + center.x, j + center.y).Blue() << endl;
-
       // look for red clusters
       if (red &&
         Pixel(i + center.x,j + center.y).Red() - Pixel(i + center.x,j + center.y).Blue() >= threshold &&
@@ -1325,27 +1226,15 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      // potential threshold measure: pixel.red/((pixel.green * pixel.blue) + .001)
-
-      /* pb with following implementation -- picks up false positives in yellow because doesn't take blue vals into account */
-      // if (green &&
-      //   Pixel(i + center.x,j + center.y).Green() - (Pixel(i + center.x,j + center.y).Blue() + Pixel(i + center.x,j + center.y).Red()) / 2 >= 0.1) {
-
+      // look for green clusters
       if (green &&
         Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Blue() >= greenThreshold &&
         Pixel(i + center.x,j + center.y).Green() - Pixel(i + center.x,j + center.y).Red() >= greenThreshold) {
-      
-      /* wasn't picking up green points; somehow was tracking black points instead */
-      // if (green && (Pixel(i + center.x, j + center.y).Green() / (Pixel(i + center.x, j + center.y).Blue() * Pixel(i + center.x, j + center.y).Red() + 0.001)) >= 0.5) { 
-
-        // print out pixel color
-        cout << "Pixel color " << Pixel(i + center.x, j + center.y).Red() << " " <<
-         Pixel(i + center.x, j + center.y).Green() << " " 
-         << Pixel(i + center.x, j + center.y).Blue() << endl;
         num_greenPoints += 1;
         continue;
       }
 
+      // look for blue clusters
       if (blue &&
         Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Red() >= blueThreshold &&
         Pixel(i + center.x,j + center.y).Blue() - Pixel(i + center.x,j + center.y).Green() >= blueThreshold) {
@@ -1354,26 +1243,12 @@ bool R2Image::clusters(coordinates center, R2Pixel color) {
         continue;
       }
 
-      // look for white clusters
-      if (white &&
-          1 - Pixel(i + center.x, j + center.y).Red() <= whiteThreshold &&
-          1 - Pixel(i + center.x, j + center.y).Green() <= whiteThreshold &&
-          1 - Pixel(i + center.x, j + center.y).Blue() <= whiteThreshold) {
-        cout << "found white point" << endl;
-        num_whitePoints += 1;
-      }
-
     }
 
   }
 
-  // cout << "number of white points " << num_whitePoints << "\n" << endl;
 
-  if (num_whitePoints > 0 || num_redPoints > 0 || num_greenPoints > 0 || num_bluePoints > 0) {
-    cout << "\nnumber of red points " << num_redPoints << endl;
-    cout << "number of green points " << num_greenPoints << endl;
-    cout << "number of blue points " << num_bluePoints << endl;
-    cout << "number of white points " << num_whitePoints << endl;
+  if (num_redPoints > 0 || num_greenPoints > 0 || num_bluePoints > 0) {
     return true;
   }
 
@@ -1433,41 +1308,6 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
 }
 
 
-void R2Image::
-magicExtractFrozen(void)
-{
-
-  //for now, I'm just manually setting frame_corners to the top left quarter of the image.
-  // frame_corners[0].x = 464; //setting upper left point.
-  // frame_corners[0].y = 222;
-
-  magicFeature();
-
-  frame_corners[1].x = 249; //setting upper right point. // TODO black tracker is hard-coded for now
-  frame_corners[1].y = 200;
-  
-  // frame_corners[2].x = 259; //setting lower right point.
-  // frame_corners[2].y = 47;
-  
-  // frame_corners[3].x = 473; //setting lower left point.
-  // frame_corners[3].y = 55;
-
-  // TODO add a red cross in middle of image for now
-  // TODO Detect and store the "frame" information
-  // TODO set freezeFrame to dimensions of the frame according to frame_corners
-  // TODO copy contents of frame into freezeFrame var, defined above
-  printf("GOT TO EXTRACT FROZEN FUNCTION\n");
-  R2Pixel red = R2red_pixel;
-  int centerX = width/2;
-  int centerY = height/2;
-  for (int i = 0; i < 5; i++) {
-    Pixel(centerX - i, centerY) = red;
-    Pixel(centerX, centerY  - i) = red;
-    Pixel(centerX + i, centerY) = red;
-    Pixel(centerX, centerY + i) = red;
-  }
-}
-
 
 R2Image::line_equation computeLine(R2Image::coordinates a, R2Image::coordinates b){
   R2Image::line_equation answer = {}; //initalizing all values in answer to zero.
@@ -1514,22 +1354,8 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
   
 
   //shifted_frame should store the points of the frame after shifting.
-  //I'm of the opinion that shifted_frame should be calculated outside of this function 
-  //(as a separate function call right befor this one in imgpro.cpp) and fed into
-  //this function as an argument, but it can also be calculated right here.
-  //for now I'm just gonna hard code it.
 
   coordinates shifted_frame[4];
-  
-
-  // 464; //setting upper left point.
-  // 222;
-  // 249; //setting upper right point.
-  // 200;
-  // 259; //setting lower right point.
-  // 47;
-  // 473; //setting lower left point.
-  // 55;
 
   shifted_frame[0].x = sh_frame.coordinates[0].x;
   shifted_frame[0].y = sh_frame.coordinates[0].y;
@@ -1687,22 +1513,6 @@ magicReplaceFrameContent(R2Image * nextImage, frame sh_frame)
     }
   }
 
-
-  // // TODO add a green cross in middle of image for now
-  // // Replace the stuff inside the frame with frozen image 
-  // printf("GOT TO FRAME CONTENT FUNCTION\n");
-  // R2Pixel red = R2Pixel(1.0, 0, 0.0, 1.0);
-  // R2Pixel blue = R2Pixel(0, 0, 1.0, 1.0);
-  // int centerX = width/2;
-  // int centerY = height/2;
-  // for (int i = 0; i < 4; i++) {
-  //   for(int j = -2; j < 3; j++){
-  //     for(int x = -2; x < 3; x++){
-  //       nextImage->Pixel(shifted_frame[i].x + j, shifted_frame[i].y + x) = red;
-  //       nextImage->Pixel(frame_corners[i].x + j, frame_corners[i].y + x) = blue;
-  //     }
-  //   }
-  // }
 }
 
 

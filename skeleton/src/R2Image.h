@@ -133,7 +133,6 @@ struct line_equation {
   bool clusters(coordinates center, R2Pixel color);
   frame findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_frame[4]);
   void magicReplaceFrameContent(R2Image * nextImage, frame shifted_frame);
-  void magicExtractFrozen(void);
 
   // File reading/writing
   int Read(const char *filename);
