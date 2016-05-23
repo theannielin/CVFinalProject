@@ -2,8 +2,8 @@
 "Magic" frame project implementation for AIT-Budapest's Computer Vision Applications for Digital Cinema.  
 TODO's marked in R2Image.cpp.
 ## Usage
-src/imgpro input/0000000.jpg output/0000000.jpg -magic NUMBER_OF_IMAGES  
-Example: src/imgpro input/0000000.jpg output/0000000.jpg -magic 60
+src/imgpro input/0000000.jpg output/0000000.jpg -magic <NUMBER_OF_IMAGES> <FIRST_IMAGE_NUMBER>
+Example: src/imgpro input/smallHD/0000118.jpg output/0000118.jpg -magic 60 118
 ## Step 1: Setup
 ### Iterate through images and call the correct functions on them
 DONE: -magic tag in imgpro.cpp  
