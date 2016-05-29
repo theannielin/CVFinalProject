@@ -15,14 +15,15 @@ coordinates of the trackers' feature points).
 NOTE: Tracker detector algorithm based on the trackers that we designed; looks for patches of color around the
 feature points and uses RGB color thresholds to determine whether or not the points are part of the tracker).
 
-## Step 3: Extract and store the frozen image from the first frame
+## Step 3: 
+Extract and store the frozen image from the first frame.
 magicExtractFrozen()
 
-## Step 4: Local search in the next frame of the .jpg image sequence to find the new position of the four
-saved points
+## Step 4: Local search
+Local search in the next frame of the .jpg image sequence to find the new position of the four saved points.
 
-## Step 5: Calculate inverse transformation between next frame and current frame and replace a portion of the
-image with the saved image.
+## Step 5: Inverse warping
+Calculate inverse transformation between next frame and current frame and replace a portion of the image with the saved image.
 magicReplaceFrameContent(nextImage)
 
 
