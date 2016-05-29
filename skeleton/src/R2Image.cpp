@@ -1263,7 +1263,7 @@ findShiftedFrame(R2Image * prevImage, R2Image * nextImage, coordinates prev_fram
   // Search area size should be reasonable
   int searchWidth = width/5;
   int searchHeight = height/5;
-  const int offset = 10;
+  const int offset = 17;
   // For each point run a local search with SSD
   for(int a = 0; a < 4; a++){
     coordinates center;
