@@ -15,7 +15,7 @@ coordinates of the trackers' feature points).
 NOTE: Tracker detector algorithm based on the trackers that we designed; looks for patches of color around the
 feature points and uses RGB color thresholds to determine whether or not the points are part of the tracker).
 
-## Step 3: 
+## Step 3: Extract image fragment
 Extract and store the frozen image from the first frame.
 magicExtractFrozen()
 
