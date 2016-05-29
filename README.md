@@ -42,4 +42,3 @@ within the tracked frame.
 Empty R2Image freezeFrame. To be resized and set to the contents of the image within the bounds of the 
 frame corners. Passed as parameter in replace image functions. Note: Image object freezeFrame must be a 
 global variable, since Image class cannot contain itself.
-(I don't think we need this according to Yi-tong's implementation? -Annie)
