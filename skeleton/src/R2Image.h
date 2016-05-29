@@ -121,12 +121,6 @@ struct line_equation {
   double b;
 };
 
-// TODO DELETE THIS IF NEVER USED
-// struct tracker_points {
-//   int x;
-//   int y;
-//   int numberOfPoints;
-// };
 
   // magic frame -- final project operations
   void magicFeature();
@@ -165,10 +159,6 @@ struct line_equation {
   */
 
   double hMatrix[3][3]; // magic frame - H matrix of 3x3 transformation between frames
-  // vector<coordinates> redTracker;
-  // vector<point> greenTracker;
-  // vector<point> blueTracker;
-  // vector<point> blackTracker;
   
 };
 

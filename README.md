@@ -1,44 +1,41 @@
 # CVFinalProject
 "Magic" frame project implementation for AIT-Budapest's Computer Vision Applications for Digital Cinema.  
-TODO's marked in R2Image.cpp.
 ## Usage
-src/imgpro input/0000000.jpg output/0000000.jpg -magic <NUMBER_OF_IMAGES> <FIRST_IMAGE_NUMBER>
+path-to-file/imgpro input/0000000.jpg output/0000000.jpg -magic <NUMBER_OF_IMAGES> <FIRST_IMAGE_NUMBER>
 Example: src/imgpro input/smallHD/0000118.jpg output/0000118.jpg -magic 60 118
 ## Step 1: Setup
-### Iterate through images and call the correct functions on them
-DONE: -magic tag in imgpro.cpp  
+### Iterate through images and call the correct functions on them 
 NOTE: Coded based on the name format of jpg files provided by professor (e.g. 0000000.jpg, 0000001.jpg, etc).  
-### Make tracking faster 
-Something about using 4 threads? Might not be necessary...
 ## Step 2: Detect and store the "frame" boundary information
-Probably need a separate function for this that will be used in steps 3 and 4  
+magicFeature()
+- Detect feature points (Harris Corner Detector) and determine which corners belong to the trackers on the
+corners of the frame. 
+- Store the coordinates of the frame corners (center of trackers, calculated by taking the average of the 
+coordinates of the trackers' feature points).
+NOTE: Tracker detector algorithm based on the trackers that we designed; looks for patches of color around the
+feature points and uses RGB color thresholds to determine whether or not the points are part of the tracker)
 ## Step 3: Extract and store the frozen image from the first frame
 magicExtractFrozen()
-## Step 4: Replace the stuff inside the frame with frozen image 
-DONE: magicReplaceFrameContent(nextImage)
+## Step 4: Local search in the next frame of the .jpg image sequence to find the new position of the four
+saved points
+## Step 5: Calculate inverse transformation between next frame and current frame and replace a portion of the
+image with the saved image.
+magicReplaceFrameContent(nextImage)
 
-## Methods and variables added for this project (incomplete):
-### Methods:
+
+## About the skeleton code:
+In C++ and provided by the professor. Defined methods read and write jpg images and allow us to overwrite pixel values.
+Image processing was written by students.
+Professor: Gergely Vass
+
+
+## Methods added for this project:
 **R2Image::magicFeature()** --> feature detection based on assignments from throughout the semester. Called on 
 			a single image only.
-			TODO add search for red/green/blue/black clusters around feature points to identify trackers
-**R2Image::clusters(x,y)** --> given coordinates (x,y) of a feature point, check if surrounding pixels form something
-			similar to the trackers we created. Return true if clusters of red/blue/green/black/white.
-			TODO define thresholds for RGB values. 
+**R2Image::clusters(x,y)** --> given coordinates (x,y) of a feature point, check if surrounding pixels form clusters of color
+			similar to the trackers we created. Return true if clusters of red/blue/green.
 **R2Image::findShiftedFrame(nextImage, prev_frame)** --> given frame coordinates prev_frame, returns the new coordinates
 			of the frame in the nextImage, running a faster local search to locate the feature points
 **R2Image::magicReplaceFrameContent(nextImage, shifted_frame)** --> takes in the next image and replaces the pixels 
 			using the coordinates of the shifted frame calculated from findShiftedFrame
 **R2Image::magicExtractFrozen()** --> Detects and stores the iformation of the first frame
-
-### Members:
-- Struct "Coordinates" to contain int values of x and y coordinates of pixels
-- Array of 4 coordinates structs to contain pairs of ints (x,y), location of frame corners in each image.  
-Meant to be used as four center points for local searches when detecting the trackers in the next image.
-- 2D array of doubles hMatrix, 3x3. Contains transformation between images. To be used for replacing image 
-within the tracked frame. 
-
-### Global vars.:
-Empty R2Image freezeFrame. To be resized and set to the contents of the image within the bounds of the 
-frame corners. Passed as parameter in replace image functions. Note: Image object freezeFrame must be a 
-global variable, since Image class cannot contain itself.
