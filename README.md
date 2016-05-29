@@ -4,7 +4,7 @@
 path-to-file/imgpro input/0000000.jpg output/0000000.jpg -magic <NUMBER_OF_IMAGES> <FIRST_IMAGE_NUMBER>
 Example: src/imgpro input/smallHD/0000118.jpg output/0000118.jpg -magic 60 118
 ## Step 1: Setup
-### Iterate through images and call the correct functions on them 
+Iterate through images and call the correct functions on them 
 NOTE: Coded based on the name format of jpg files provided by professor (e.g. 0000000.jpg, 0000001.jpg, etc).  
 ## Step 2: Detect and store the "frame" boundary information
 magicFeature()
@@ -13,11 +13,14 @@ corners of the frame.
 - Store the coordinates of the frame corners (center of trackers, calculated by taking the average of the 
 coordinates of the trackers' feature points).
 NOTE: Tracker detector algorithm based on the trackers that we designed; looks for patches of color around the
-feature points and uses RGB color thresholds to determine whether or not the points are part of the tracker)
+feature points and uses RGB color thresholds to determine whether or not the points are part of the tracker).
+
 ## Step 3: Extract and store the frozen image from the first frame
 magicExtractFrozen()
+
 ## Step 4: Local search in the next frame of the .jpg image sequence to find the new position of the four
 saved points
+
 ## Step 5: Calculate inverse transformation between next frame and current frame and replace a portion of the
 image with the saved image.
 magicReplaceFrameContent(nextImage)
